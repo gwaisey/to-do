@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -52,8 +53,8 @@ func (h *TodoHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 	sqlQuery += " ORDER BY created_at DESC"
 
-	// A.56 — SQL: query dengan multiple args
-	rows, err := h.db.Conn.Query(sqlQuery, args...)
+	// A.56 — SQL: query dengan multiple args dengan context
+	rows, err := h.db.Conn.QueryContext(r.Context(), sqlQuery, args...)
 	if err != nil {
 		utils.Fail(w, http.StatusInternalServerError, "Gagal mengambil data")
 		return
@@ -95,12 +96,12 @@ func (h *TodoHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		todos = append(todos, todo)
 	}
 
-	// Get true statistics directly from the database for the user
+	// Get true statistics directly from the database for the user dengan context
 	var total, pendingCount, inProgressCount, completedCount int
-	h.db.Conn.QueryRow("SELECT COUNT(*) FROM todos WHERE user_id = ?", userID).Scan(&total)
-	h.db.Conn.QueryRow("SELECT COUNT(*) FROM todos WHERE user_id = ? AND status = 'pending'", userID).Scan(&pendingCount)
-	h.db.Conn.QueryRow("SELECT COUNT(*) FROM todos WHERE user_id = ? AND status = 'in_progress'", userID).Scan(&inProgressCount)
-	h.db.Conn.QueryRow("SELECT COUNT(*) FROM todos WHERE user_id = ? AND status = 'done'", userID).Scan(&completedCount)
+	h.db.Conn.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM todos WHERE user_id = ?", userID).Scan(&total)
+	h.db.Conn.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM todos WHERE user_id = ? AND status = 'pending'", userID).Scan(&pendingCount)
+	h.db.Conn.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM todos WHERE user_id = ? AND status = 'in_progress'", userID).Scan(&inProgressCount)
+	h.db.Conn.QueryRowContext(r.Context(), "SELECT COUNT(*) FROM todos WHERE user_id = ? AND status = 'done'", userID).Scan(&completedCount)
 
 	// A.17 — Map: tambahkan statistik (group by priority)
 	grouped := models.GroupByPriority(todos)
@@ -163,8 +164,9 @@ func (h *TodoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// A.39 — Random: UUID untuk ID baru
 	todoID := utils.GenerateID()
 
-	// A.56 — SQL: insert
-	_, err := h.db.Conn.Exec(
+	// A.56 — SQL: insert dengan context
+	_, err := h.db.Conn.ExecContext(
+		r.Context(),
 		`INSERT INTO todos (id, user_id, title, description, priority, status, due_date, tags)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		todoID, userID, strings.TrimSpace(req.Title), req.Description,
@@ -176,7 +178,7 @@ func (h *TodoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ambil todo yang baru dibuat
-	todo := h.getByID(todoID)
+	todo := h.getByID(r.Context(), todoID)
 	utils.Success(w, http.StatusCreated, "Todo berhasil dibuat", todo)
 }
 
@@ -185,7 +187,7 @@ func (h *TodoHandler) GetOne(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(string)
 	todoID := extractID(r.URL.Path, "/todos/")
 
-	todo := h.getByID(todoID)
+	todo := h.getByID(r.Context(), todoID)
 	if todo == nil {
 		utils.Fail(w, http.StatusNotFound, "Todo tidak ditemukan")
 		return
@@ -205,7 +207,7 @@ func (h *TodoHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(string)
 	todoID := extractID(r.URL.Path, "/todos/")
 
-	existing := h.getByID(todoID)
+	existing := h.getByID(r.Context(), todoID)
 	if existing == nil || existing.UserID != userID {
 		utils.Fail(w, http.StatusNotFound, "Todo tidak ditemukan")
 		return
@@ -241,8 +243,9 @@ func (h *TodoHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	tagsJSON, _ := json.Marshal(existing.Tags)
 
-	// A.56 — SQL: update
-	_, err := h.db.Conn.Exec(
+	// A.56 — SQL: update dengan context
+	_, err := h.db.Conn.ExecContext(
+		r.Context(),
 		`UPDATE todos SET title=?, description=?, priority=?, status=?, tags=?, updated_at=CURRENT_TIMESTAMP
 		 WHERE id=? AND user_id=?`,
 		existing.Title, existing.Description, existing.Priority,
@@ -253,7 +256,7 @@ func (h *TodoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.Success(w, http.StatusOK, "Todo berhasil diupdate", h.getByID(todoID))
+	utils.Success(w, http.StatusOK, "Todo berhasil diupdate", h.getByID(r.Context(), todoID))
 }
 
 // Delete - DELETE /todos/{id} — hapus todo
@@ -261,7 +264,8 @@ func (h *TodoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(string)
 	todoID := extractID(r.URL.Path, "/todos/")
 
-	result, err := h.db.Conn.Exec(
+	result, err := h.db.Conn.ExecContext(
+		r.Context(),
 		`DELETE FROM todos WHERE id=? AND user_id=?`, todoID, userID,
 	)
 	if err != nil {
@@ -287,7 +291,8 @@ func (h *TodoHandler) MarkDone(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimSuffix(r.URL.Path, "/complete")
 	todoID := extractID(path, "/todos/")
 
-	_, err := h.db.Conn.Exec(
+	_, err := h.db.Conn.ExecContext(
+		r.Context(),
 		`UPDATE todos SET status='done', updated_at=CURRENT_TIMESTAMP WHERE id=? AND user_id=?`,
 		todoID, userID,
 	)
@@ -296,17 +301,21 @@ func (h *TodoHandler) MarkDone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.Success(w, http.StatusOK, "Todo ditandai selesai", h.getByID(todoID))
+	utils.Success(w, http.StatusOK, "Todo ditandai selesai", h.getByID(r.Context(), todoID))
 }
 
 // SearchWithTimeout - A.35 — Channel Timeout: contoh penggunaan di handler
 func (h *TodoHandler) SearchWithTimeout(w http.ResponseWriter, r *http.Request) {
 	// A.35 — Channel Timeout
+	// Buat context dengan timeout 5 detik dari request context
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
 	done := make(chan []models.Todo, 1)
 
 	go func() {
-		// Simulasi query yang mungkin lama
-		rows, err := h.db.Conn.Query(`SELECT id, user_id, title, description, priority, status, due_date, tags, created_at, updated_at FROM todos WHERE title LIKE ?`,
+		// Gunakan QueryContext(ctx, ...) agar database dibatalkan secara otomatis jika timeout
+		rows, err := h.db.Conn.QueryContext(ctx, `SELECT id, user_id, title, description, priority, status, due_date, tags, created_at, updated_at FROM todos WHERE title LIKE ?`,
 			"%"+r.URL.Query().Get("q")+"%")
 		if err != nil {
 			done <- nil
@@ -349,18 +358,19 @@ func (h *TodoHandler) SearchWithTimeout(w http.ResponseWriter, r *http.Request) 
 	select {
 	case result := <-done:
 		utils.Success(w, http.StatusOK, "Hasil pencarian", result)
-	case <-time.After(5 * time.Second): // A.35 — Timeout
+	case <-ctx.Done(): // A.35 — Timeout dipicu dari context.Done()
 		utils.Fail(w, http.StatusGatewayTimeout, "Pencarian timeout")
 	}
 }
 
-// A.19 — Multiple Return: helper yang bisa return nil
-func (h *TodoHandler) getByID(id string) *models.Todo {
+// A.19 — Multiple Return: helper yang bisa return nil dengan context
+func (h *TodoHandler) getByID(ctx context.Context, id string) *models.Todo {
 	var todo models.Todo
 	var tagsJSON string
 	var dueDate sql.NullString
 
-	err := h.db.Conn.QueryRow(
+	err := h.db.Conn.QueryRowContext(
+		ctx,
 		`SELECT id, user_id, title, description, priority, status, due_date, tags, created_at, updated_at
 		 FROM todos WHERE id=?`, id,
 	).Scan(&todo.ID, &todo.UserID, &todo.Title, &todo.Description,

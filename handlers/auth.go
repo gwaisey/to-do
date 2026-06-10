@@ -53,8 +53,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// A.39 — Random: generate unique ID
 	userID := utils.GenerateID()
 
-	// A.56 — SQL: insert ke database
-	_, err = h.db.Conn.Exec(
+	// A.56 — SQL: insert ke database dengan context
+	_, err = h.db.Conn.ExecContext(
+		r.Context(),
 		`INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)`,
 		userID, req.Username, req.Email, hashedPassword,
 	)
@@ -80,10 +81,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A.56 — SQL: query user berdasarkan email
 	var user models.User
 	var hashedPassword string
-	err := h.db.Conn.QueryRow(
+	err := h.db.Conn.QueryRowContext(
+		r.Context(),
 		`SELECT id, username, email, password FROM users WHERE email = ?`,
 		req.Email,
 	).Scan(&user.ID, &user.Username, &user.Email, &hashedPassword)
