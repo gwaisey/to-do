@@ -5,7 +5,7 @@ import (
 	"context"
 	"flag"       // A.48 — Arguments & Flag
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,6 +25,10 @@ var (
 )
 
 func main() {
+	// Inisialisasi structured logger (slog) JSON format ke stdout
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	// A.8 — Komentar: dokumentasi kode
 	// A.48 — Arguments & Flag: flag CLI
 	port := flag.String("port", "", "Port server (override .env)")
@@ -146,23 +150,23 @@ func main() {
 
 	// A.30 — Goroutine: server berjalan tanpa memblokir main goroutine
 	go func() {
-		fmt.Printf("\n🚀 Server berjalan di http://localhost:%s\n", cfg.AppPort)
-		fmt.Println("   Tekan Ctrl+C untuk berhenti")
+		slog.Info("Server running", "url", fmt.Sprintf("http://localhost:%s", cfg.AppPort))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("❌ Server error: %v", err)
+			slog.Error("Server error", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	// A.33 — Channel Select: tunggu sinyal shutdown
 	<-quit
-	fmt.Println("\n⏳ Mematikan server...")
+	slog.Info("Shutting down server...")
 
 	// A.59 — sync.WaitGroup: tunggu request yang sedang berjalan selesai
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("❌ Shutdown error: %v", err)
+		slog.Error("Shutdown error", "error", err)
 	}
 
 	// A.60 — sync.Mutex: baca counter dengan aman

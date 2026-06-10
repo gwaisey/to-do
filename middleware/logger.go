@@ -2,7 +2,7 @@
 package middleware
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 	"time" // A.40 — Time
 )
@@ -18,17 +18,15 @@ func Logger(next http.Handler) http.Handler {
 
 		next.ServeHTTP(wrapped, r)
 
-		// A.38 — Layout Format String: format waktu
-		timestamp := start.Format("2006-01-02 15:04:05")
 		duration := time.Since(start) // A.42 — Time Duration
 
-		// C.8 — Logging: log setiap request
-		fmt.Printf("[%s] %s %s → %d (%v)\n",
-			timestamp,
-			r.Method,
-			r.URL.Path,
-			wrapped.statusCode,
-			duration,
+		// C.8 — Logging: log setiap request menggunakan slog
+		slog.Info("HTTP Request",
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.Int("status", wrapped.statusCode),
+			slog.Duration("duration", duration),
+			slog.String("remote_addr", r.RemoteAddr),
 		)
 	})
 }
