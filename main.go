@@ -37,6 +37,12 @@ func main() {
 	// Load konfigurasi
 	cfg := config.Load()
 
+	// Validasi keamanan JWT_SECRET di environment production
+	if cfg.AppEnv == "production" && (cfg.JWTSecret == "" || cfg.JWTSecret == "default-secret") {
+		slog.Error("Keamanan Kritis: JWT_SECRET wajib disetel di environment production dan tidak boleh bernilai default!")
+		os.Exit(1)
+	}
+
 	// A.13 — Seleksi kondisi: override port dari flag jika ada
 	if *port != "" {
 		cfg.AppPort = *port

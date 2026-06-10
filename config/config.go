@@ -14,6 +14,7 @@ const DefaultPort = "8080"
 
 // Config - A.24 — Struct: kumpulan field bertipe data
 type Config struct {
+	AppEnv         string
 	AppPort        string
 	DBPath         string
 	JWTSecret      string
@@ -29,6 +30,7 @@ func Load() *Config {
 	}
 
 	// A.9 — Variabel dengan tipe eksplisit
+	appEnv := getEnv("APP_ENV", "development")
 	port := getEnv("APP_PORT", DefaultPort)
 	dbPath := getEnv("DB_PATH", "./todo.db")
 	jwtSecret := getEnv("JWT_SECRET", "default-secret")
@@ -41,6 +43,7 @@ func Load() *Config {
 	}
 
 	return &Config{
+		AppEnv:         appEnv,
 		AppPort:        port,
 		DBPath:         dbPath,
 		JWTSecret:      jwtSecret,
