@@ -16,7 +16,11 @@ A clean, production-ready RESTful Todo API built with Go, utilizing standard `ne
   - **Graceful Shutdown**: Handles OS interruption signals (`SIGINT`/`SIGTERM`) and waits for outstanding requests.
   - **Pipeline Concurrency**: Pipeline-based search and filter helper functions.
   - **Timeout Pattern**: Search endpoints protected by timeouts using Go channels.
+- **Rate Limiting**: Built-in Token Bucket rate limiter middleware to throttle requests per client IP and prevent spam/brute-force (returns HTTP `429`).
+- **Structured Logging**: Using Go's native `log/slog` for JSON-formatted logs to stdout, ideal for log parsing and aggregators.
+- **SQLite Concurrency Optimization**: Configured WAL (Write-Ahead Logging) mode, busy timeout, and connection pooling limits to prevent "database is locked" errors under concurrent traffic.
 - **Database Migrations**: Automatic SQLite database creation and schema migration on startup.
+- **Strict Environment Validation**: Fails fast on startup in production environments (`APP_ENV=production`) if `JWT_SECRET` is unset or remains on default development secrets.
 
 ---
 
