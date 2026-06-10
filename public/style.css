@@ -1,0 +1,1235 @@
+/* public/style.css */
+
+:root {
+    --ios-bg: #f2f2f7;
+    --ios-card: #ffffff;
+    --ios-text: #000000;
+    --ios-text-secondary: #8e8e93;
+    --ios-blue: #007aff;
+    --ios-blue-light: #007aff15;
+    --ios-green: #34c759;
+    --ios-green-light: #34c75915;
+    --ios-orange: #ff9500;
+    --ios-orange-light: #ff950015;
+    --ios-red: #ff3b30;
+    --ios-red-light: #ff3b3015;
+    --ios-gray-light: #e5e5ea;
+    --ios-gray-divider: #c6c6c8;
+    --ios-seg-bg: #e3e3e9;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--ios-bg);
+    color: var(--ios-text);
+    line-height: 1.5;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+#app {
+    width: 100%;
+    max-width: 480px;
+    background-color: var(--ios-bg);
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 2000;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+    opacity: 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    text-align: center;
+    width: 90%;
+    max-width: 380px;
+    backdrop-filter: blur(10px);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* Screens management */
+.screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.screen.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* AUTHENTICATION SCREEN */
+#auth-screen {
+    justify-content: center;
+    padding: 24px;
+}
+
+.auth-card {
+    background: var(--ios-card);
+    border-radius: 20px;
+    padding: 32px 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.app-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--ios-blue);
+    color: white;
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 16px rgba(0, 122, 255, 0.3);
+}
+
+.auth-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+}
+
+.auth-header p {
+    color: var(--ios-text-secondary);
+    font-size: 14px;
+}
+
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ios-text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--ios-gray-light);
+    background-color: #fafafa;
+    font-size: 15px;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.input-group input:focus {
+    border-color: var(--ios-blue);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.btn {
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary {
+    background-color: var(--ios-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0066d6;
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-block {
+    display: flex;
+    width: 100%;
+}
+
+.auth-toggle {
+    text-align: center;
+    font-size: 14px;
+    color: var(--ios-text-secondary);
+    margin-top: 20px;
+}
+
+.auth-toggle a {
+    color: var(--ios-blue);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* IOS HEADER */
+.ios-header {
+    background-color: rgba(242, 242, 247, 0.85);
+    backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--ios-blue);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.greeting {
+    font-size: 12px;
+    color: var(--ios-text-secondary);
+}
+
+.username {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.btn-logout {
+    background: transparent;
+    border: none;
+    color: var(--ios-red);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.btn-logout:hover {
+    background-color: var(--ios-red-light);
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ios-text-secondary);
+    font-size: 14px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    border-radius: 10px;
+    border: none;
+    background-color: rgba(118, 118, 128, 0.12);
+    font-size: 15px;
+    outline: none;
+    transition: background-color 0.2s;
+}
+
+.search-input:focus {
+    background-color: rgba(118, 118, 128, 0.18);
+}
+
+/* IOS CONTENT */
+.ios-content {
+    flex: 1;
+    padding: 16px 20px 100px; /* space for FAB */
+    overflow-y: auto;
+}
+
+/* STATS WIDGETS */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background-color: var(--ios-card);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.01);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card:active {
+    transform: scale(0.97);
+}
+
+.stat-icon {
+    font-size: 20px;
+    margin-bottom: 12px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ios-text-secondary);
+}
+
+.stat-card.blue .stat-value { color: var(--ios-blue); }
+.stat-card.orange .stat-value { color: var(--ios-orange); }
+.stat-card.green .stat-value { color: var(--ios-green); }
+
+/* SEGMENTED CONTROL */
+.segmented-control {
+    display: flex;
+    background-color: var(--ios-seg-bg);
+    border-radius: 9px;
+    padding: 2px;
+    margin-bottom: 24px;
+}
+
+.segment {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 6px 0;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    color: #48484a;
+}
+
+.segment.active {
+    background-color: #ffffff;
+    color: #000000;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 1px rgba(0,0,0,0.05);
+}
+
+/* SECTION HEADERS */
+.section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-title-row h2 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+}
+
+.ios-select-filter {
+    border: none;
+    background-color: transparent;
+    color: var(--ios-blue);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+}
+
+/* TODO LIST & ITEMS */
+.todo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.todo-item {
+    background-color: var(--ios-card);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.02);
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.todo-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.04);
+}
+
+.todo-check {
+    padding-top: 2px;
+}
+
+.checkbox-circle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--ios-blue);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.checkbox-circle:hover {
+    background-color: var(--ios-blue-light);
+}
+
+.checkbox-circle.checked {
+    background-color: var(--ios-green);
+    border-color: var(--ios-green);
+}
+
+.checkbox-circle.checked::after {
+    content: "✓";
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.todo-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.todo-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.todo-item-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ios-text);
+    word-break: break-word;
+    transition: color 0.2s, text-decoration 0.2s;
+}
+
+.todo-item.done .todo-item-title {
+    text-decoration: line-through;
+    color: var(--ios-text-secondary);
+}
+
+.todo-item-desc {
+    font-size: 13px;
+    color: var(--ios-text-secondary);
+    word-break: break-word;
+}
+
+.todo-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.due-date {
+    font-size: 11px;
+    color: var(--ios-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.due-date.overdue {
+    color: var(--ios-red);
+    font-weight: 600;
+}
+
+.tag-badge {
+    background-color: var(--ios-bg);
+    color: #48484a;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priority-pill {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.priority-pill.high {
+    background-color: var(--ios-red-light);
+    color: var(--ios-red);
+}
+
+.priority-pill.medium {
+    background-color: var(--ios-orange-light);
+    color: var(--ios-orange);
+}
+
+.priority-pill.low {
+    background-color: var(--ios-blue-light);
+    color: var(--ios-blue);
+}
+
+.todo-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--ios-text-secondary);
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: var(--ios-bg);
+    color: var(--ios-text);
+}
+
+.btn-icon.delete:hover {
+    background-color: var(--ios-red-light);
+    color: var(--ios-red);
+}
+
+.btn-icon.play:hover {
+    background-color: var(--ios-blue-light);
+    color: var(--ios-blue);
+}
+
+.btn-icon.pause {
+    color: var(--ios-orange);
+}
+
+.btn-icon.pause:hover {
+    background-color: var(--ios-orange-light);
+    color: var(--ios-orange);
+}
+
+.todo-item.in-progress {
+    border-left: 4px solid var(--ios-orange);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ios-text-secondary);
+    font-size: 15px;
+}
+
+/* FLOATING ACTION BUTTON (FAB) */
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--ios-blue);
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s;
+}
+
+.fab:hover {
+    background-color: #0066d6;
+    transform: scale(1.05);
+}
+
+.fab:active {
+    transform: scale(0.95);
+}
+
+/* BOTTOM SHEET MODAL */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: flex-end;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-backdrop.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-sheet {
+    width: 100%;
+    max-width: 480px;
+    background-color: var(--ios-bg);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.15);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-backdrop.active .modal-sheet {
+    transform: translateY(0);
+}
+
+.sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sheet-header h3 {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.btn-text {
+    background: transparent;
+    border: none;
+    color: var(--ios-blue);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 6px;
+}
+
+.btn-text.bold {
+    font-weight: 600;
+}
+
+.sheet-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sheet-input-group {
+    background-color: var(--ios-card);
+    border-radius: 12px;
+    padding: 12px 16px;
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.sheet-input-group input, .sheet-input-group textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    outline: none;
+    color: var(--ios-text);
+}
+
+.sheet-input-group textarea {
+    resize: none;
+    font-size: 15px;
+}
+
+/* Grouped Lists (like iOS settings) */
+.sheet-section-card {
+    background-color: var(--ios-card);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.02);
+}
+
+.sheet-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ios-gray-light);
+}
+
+.sheet-row:last-child {
+    border-bottom: none;
+}
+
+.sheet-row-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.sheet-row-column input {
+    border: none;
+    outline: none;
+    font-size: 15px;
+    width: 100%;
+}
+
+.row-label {
+    font-size: 15px;
+    color: var(--ios-text);
+}
+
+.ios-date-input {
+    border: none;
+    background: transparent;
+    color: var(--ios-blue);
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Small segmented control inside modal */
+.segmented-control-small {
+    display: flex;
+    background-color: var(--ios-seg-bg);
+    border-radius: 8px;
+    padding: 2px;
+    width: 180px;
+}
+
+.segment-pill {
+    flex: 1;
+    cursor: pointer;
+}
+
+.segment-pill input {
+    display: none;
+}
+
+.segment-pill span {
+    display: block;
+    text-align: center;
+    padding: 4px 0;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    color: #48484a;
+    transition: all 0.2s;
+}.segment-pill input:checked + span {
+    background-color: #ffffff;
+    color: #000000;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Mobile Todo Detail Panel default hidden */
+.todo-detail-panel {
+    display: none;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN (TABLET & DESKTOP)
+   ========================================== */
+@media (min-width: 768px) {
+    body {
+        align-items: stretch;
+        padding: 0;
+        overflow: hidden;
+        height: 100vh;
+    }
+
+    #app {
+        max-width: 100%;
+        height: 100vh;
+        max-height: 100%;
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+        overflow: hidden;
+    }
+
+    /* Screen height adjustment */
+    .screen {
+        height: 100vh;
+        overflow: hidden;
+        display: none;
+        flex-direction: column;
+    }
+    
+    .screen.active {
+        display: flex;
+    }
+
+    /* Center Auth Screen (needs custom centering since app is full screen) */
+    #auth-screen {
+        padding: 40px;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--ios-bg);
+    }
+
+    .auth-card {
+        padding: 40px 32px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Header changes for widescreen */
+    .ios-header {
+        padding: 16px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 32px;
+        border-bottom: 1px solid var(--ios-gray-divider);
+        flex: 0 0 auto;
+    }
+    
+    .header-top {
+        margin-bottom: 0;
+        flex: 0 0 auto;
+    }
+
+    .search-container {
+        max-width: 320px;
+        margin-left: auto;
+        flex: 1 1 auto;
+    }
+
+    .ios-content {
+        display: grid;
+        grid-template-columns: 280px 1fr 360px;
+        gap: 0;
+        padding: 0;
+        overflow: hidden;
+        flex: 1 1 auto;
+    }
+
+    .dashboard-sidebar {
+        background-color: var(--ios-bg);
+        border-right: 1px solid var(--ios-gray-divider);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .todo-section {
+        background-color: var(--ios-card);
+        padding: 32px 40px;
+        height: 100%;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    /* Limit todo list max-width for readability on extremely wide screens */
+    .todo-list, .section-title-row {
+        max-width: 800px;
+        width: 100%;
+    }
+
+    /* Stack Stats Grid 2-column iPad Reminders Style */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 0;
+    }
+
+    .stat-card {
+        background-color: var(--ios-card);
+        border-radius: 12px;
+        padding: 12px 14px;
+        height: 84px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .stat-card:last-child {
+        grid-column: span 2;
+    }
+
+    .stat-icon {
+        margin-bottom: 0;
+        font-size: 22px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        margin-bottom: 0;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ios-text-secondary);
+    }
+
+    /* Transform Segmented Control to Vertical List Menu */
+    .segmented-control {
+        flex-direction: column;
+        background-color: var(--ios-card);
+        border-radius: 12px;
+        padding: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        gap: 2px;
+    }
+
+    .segment {
+        padding: 10px 14px;
+        text-align: left;
+        border-radius: 8px;
+        background-color: transparent;
+        color: var(--ios-text);
+        font-size: 14px;
+        font-weight: 500;
+        border: none;
+        box-shadow: none;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .segment.active {
+        background-color: var(--ios-blue-light);
+        color: var(--ios-blue);
+        font-weight: 600;
+        box-shadow: none;
+        border-color: transparent;
+    }
+
+    .segment:hover:not(.active) {
+        background-color: rgba(0, 0, 0, 0.03);
+        transform: none;
+    }
+
+    /* Detail Panel Styling on Widescreen */
+    .todo-detail-panel {
+        display: flex;
+        flex-direction: column;
+        background-color: var(--ios-bg);
+        border-left: 1px solid var(--ios-gray-divider);
+        padding: 24px;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .detail-empty-state {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--ios-text-secondary);
+        text-align: center;
+        gap: 12px;
+    }
+
+    .detail-empty-icon {
+        font-size: 40px;
+    }
+
+    .detail-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    #detail-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: var(--ios-text);
+        word-break: break-word;
+        line-height: 1.3;
+        letter-spacing: -0.4px;
+    }
+
+    /* Detail Card Groups */
+    .detail-card {
+        background-color: var(--ios-card);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
+    }
+
+    .detail-section-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--ios-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--ios-gray-light);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-value {
+        font-size: 14px;
+        color: var(--ios-text);
+    }
+
+    .detail-desc-text {
+        font-size: 14px;
+        color: #3a3a3c;
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.5;
+    }
+
+    .detail-tags-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .detail-actions-row {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: auto; /* Push actions to the bottom */
+        padding-top: 24px;
+    }
+
+    .btn-danger-text {
+        background-color: transparent;
+        color: var(--ios-red);
+        font-weight: 600;
+        border: 1px solid var(--ios-red-light);
+    }
+
+    .btn-danger-text:hover {
+        background-color: var(--ios-red-light);
+    }
+
+    .btn-secondary {
+        background-color: var(--ios-gray-light);
+        color: var(--ios-blue);
+    }
+
+    .btn-secondary:hover {
+        background-color: #d1d1d6;
+    }
+
+    /* Active Todo Highlighting */
+    .todo-item.active-todo {
+        background-color: var(--ios-blue-light);
+        border-color: rgba(0, 122, 255, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.05);
+    }
+
+    /* Positioning the FAB relative to browser window */
+    .fab {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        z-index: 99;
+    }
+
+    /* Centered Modal Sheet instead of Bottom Sheet on Tablet/Desktop */
+    .modal-backdrop {
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .modal-sheet {
+        border-radius: 16px;
+        transform: scale(0.9) translateY(0);
+        opacity: 0;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+        max-height: 85vh;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-backdrop.active .modal-sheet {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN (TV / LARGE SCREEN)
+   ========================================== */
+@media (min-width: 1400px) {
+    /* Scale typography and size up for TV distance */
+    :root {
+        font-size: 18px;
+    }
+
+    .ios-content {
+        grid-template-columns: 320px 1fr 400px;
+    }
+
+    .stats-grid {
+        gap: 16px;
+    }
+    
+    .stat-card {
+        height: 96px;
+        padding: 14px 16px;
+    }
+    
+    .stat-value {
+        top: 14px;
+        right: 16px;
+        font-size: 28px;
+    }
+
+    .segment {
+        padding: 12px 16px;
+        font-size: 16px;
+    }
+
+    .todo-item {
+        padding: 20px;
+    }
+    
+    .todo-list, .section-title-row {
+        max-width: 900px;
+    }
+}
