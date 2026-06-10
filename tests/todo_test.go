@@ -54,18 +54,18 @@ func TestValidateEmail(t *testing.T) {
 
 // TestHashPassword - A.58 — Unit Test: test hash password
 func TestHashPassword(t *testing.T) {
-	password := "password123"
+	testPlaintext := "samplePlaintext123!"
 
-	hash, err := utils.HashPassword(password)
+	hash, err := utils.HashPassword(testPlaintext)
 	if err != nil {
 		t.Fatalf("HashPassword gagal: %v", err)
 	}
 
-	if hash == password {
+	if hash == testPlaintext {
 		t.Error("Hash tidak boleh sama dengan password asli")
 	}
 
-	if !utils.CheckPassword(password, hash) {
+	if !utils.CheckPassword(testPlaintext, hash) {
 		t.Error("CheckPassword harus return true untuk password yang benar")
 	}
 

@@ -33,7 +33,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"username\": \"budi\",\n  \"email\": \"budi@email.com\",\n  \"password\": \"password123\"\n}"
+          "raw": "{\n  \"username\": \"budi\",\n  \"email\": \"budi@email.com\",\n  \"password\": \"dummy_secure_string_99\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/register",
@@ -73,7 +73,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"budi@email.com\",\n  \"password\": \"password123\"\n}"
+          "raw": "{\n  \"email\": \"budi@email.com\",\n  \"password\": \"dummy_secure_string_99\"\n}"
         },
         "url": {
           "raw": "{{base_url}}/login",

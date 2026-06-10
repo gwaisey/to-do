@@ -23,9 +23,9 @@ func ValidateEmail(email string) error {
 	return nil
 }
 
-// ValidatePassword: A.44 — Fungsi String
-func ValidatePassword(password string) error {
-	if len(password) < 8 {
+// ValidatePass: A.44 — Fungsi String
+func ValidatePass(pass string) error {
+	if len(pass) < 8 {
 		return ErrWeakPassword
 	}
 	return nil

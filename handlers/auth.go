@@ -38,7 +38,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		utils.Fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := utils.ValidatePassword(req.Password); err != nil {
+	if err := utils.ValidatePass(req.Password); err != nil {
 		utils.Fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
