@@ -29,10 +29,25 @@ func New(cfg *config.Config) *DB {
 		log.Fatalf("❌ Database tidak bisa di-ping: %v", err)
 	}
 
+	// C.11 — SQLite Optimizations for Concurrency
+	// 1. Set busy_timeout to 5000ms to handle concurrent locks gracefully
+	if _, err := conn.Exec("PRAGMA busy_timeout = 5000;"); err != nil {
+		log.Printf("⚠️  Gagal menyetel busy_timeout: %v", err)
+	}
+
+	// 2. Enable WAL (Write-Ahead Logging) mode to allow concurrent reads and writes
+	if _, err := conn.Exec("PRAGMA journal_mode = WAL;"); err != nil {
+		log.Printf("⚠️  Gagal menyetel journal_mode WAL: %v", err)
+	}
+
+	// 3. Limit connection pool size for SQLite
+	conn.SetMaxOpenConns(10)
+	conn.SetMaxIdleConns(5)
+
 	db := &DB{Conn: conn}
 	db.migrate()
 
-	fmt.Println("✅ Database SQLite terhubung:", cfg.DBPath)
+	fmt.Println("✅ Database SQLite terhubung (WAL mode):", cfg.DBPath)
 	return db
 }
 
