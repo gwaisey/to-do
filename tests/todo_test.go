@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing" // A.58 — Unit Test
+	"to-do/middleware"
 	"to-do/models"
 	"to-do/utils"
 )
@@ -210,6 +211,38 @@ func TestUpdateTodoRequestValidation(t *testing.T) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tc.wantErr)
 			}
 		})
+	}
+}
+
+// TestRateLimiter - Unit test untuk middleware RateLimiter
+func TestRateLimiter(t *testing.T) {
+	// Buat handler dummy
+	dummyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Setup RateLimiter dengan rate = 1 token/detik, burst = 2 token
+	limiter := middleware.RateLimiter(1.0, 2.0)
+	handler := limiter(dummyHandler)
+
+	// Kirim 2 request pertama (harusnya OK karena burst = 2)
+	for i := 0; i < 2; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/health", nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("Request %d: diharapkan status 200, didapat %d", i+1, rec.Code)
+		}
+	}
+
+	// Request ke-3 langsung setelahnya harusnya ditolak (Too Many Requests - 429)
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusTooManyRequests {
+		t.Errorf("Request 3: diharapkan status 429, didapat %d", rec.Code)
 	}
 }
 

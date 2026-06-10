@@ -137,9 +137,12 @@ func main() {
 		}
 	})))
 
-	// B.19 — Middleware stack: CORS + Logger + Request Counter
+	// B.19 — Middleware stack: CORS + Rate Limiter + Logger + Request Counter
+	// Batasi rata-rata 10 request/detik dengan kapasitas burst 20 request per IP
+	rateLimiter := middleware.RateLimiter(10.0, 20.0)
+
 	// C.14 — CORS
-	finalHandler := corsMiddleware(middleware.Logger(countRequests(mux)))
+	finalHandler := corsMiddleware(rateLimiter(middleware.Logger(countRequests(mux))))
 
 	server := &http.Server{
 		Addr:         ":" + cfg.AppPort,
