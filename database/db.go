@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"todo-api/config"
+	"to-do/config"
 
 	_ "modernc.org/sqlite" // A.56 — driver SQL di-import sebagai side-effect
 )

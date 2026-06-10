@@ -1,4 +1,4 @@
-# Todo API (Golang)
+# to-do (Golang)
 
 A clean, production-ready RESTful Todo API built with Go, utilizing standard `net/http` library, SQLite for persistence, and JWT for secure authentication.
 
@@ -37,7 +37,7 @@ All endpoints (except `/health`, `/register`, and `/login`) require a Bearer tok
 | `/todos/search` | `GET` | Yes | Search todos with query param `q` (with 5-second timeout logic). |
 | `/todos/{id}` | `DELETE` | Yes | Delete a todo. |
 
-A Postman collection is also provided in the repository: [todo-api.postman_collection.json](todo-api.postman_collection.json).
+A Postman collection is also provided in the repository: [to-do.postman_collection.json](to-do.postman_collection.json).
 
 ---
 
@@ -74,10 +74,10 @@ You can also run the application inside a Docker container:
 
 ```bash
 # 1. Build the docker image
-docker build -t todo-api .
+docker build -t to-do .
 
 # 2. Run the container mapping port 8080
-docker run -p 8080:8080 --env-file .env todo-api
+docker run -p 8080:8080 --env-file .env to-do
 ```
 
 ---

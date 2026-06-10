@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"todo-api/database"
-	"todo-api/middleware"
-	"todo-api/models"
-	"todo-api/utils"
+	"to-do/database"
+	"to-do/middleware"
+	"to-do/models"
+	"to-do/utils"
 )
 
 // TodoHandler - A.24 — Struct: handler untuk Todo

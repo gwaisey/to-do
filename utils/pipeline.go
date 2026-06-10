@@ -1,7 +1,7 @@
 // utils/pipeline.go
 package utils
 
-import "todo-api/models"
+import "to-do/models"
 
 // C.62 — Concurrency Pattern: Pipeline
 // C.63 — Fan-in Fan-out

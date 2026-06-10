@@ -12,10 +12,10 @@ import (
 	"sync"       // A.59 — sync.WaitGroup, A.60 — sync.Mutex
 	"syscall"
 	"time"
-	"todo-api/config"
-	"todo-api/database"
-	"todo-api/handlers"
-	"todo-api/middleware"
+	"to-do/config"
+	"to-do/database"
+	"to-do/handlers"
+	"to-do/middleware"
 )
 
 // A.60 — sync.Mutex: untuk request counter thread-safe

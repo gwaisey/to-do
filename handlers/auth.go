@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-	"todo-api/config"
-	"todo-api/database"
-	"todo-api/models"
-	"todo-api/utils"
+	"to-do/config"
+	"to-do/database"
+	"to-do/models"
+	"to-do/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 )

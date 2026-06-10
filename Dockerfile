@@ -10,15 +10,15 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=1 GOOS=linux go build -o todo-api .
+RUN CGO_ENABLED=1 GOOS=linux go build -o to-do .
 
 # Stage 2: Runtime (image lebih kecil)
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates sqlite-libs
 WORKDIR /root/
 
-COPY --from=builder /app/todo-api .
+COPY --from=builder /app/to-do .
 COPY .env .
 
 EXPOSE 8080
-CMD ["./todo-api"]
+CMD ["./to-do"]

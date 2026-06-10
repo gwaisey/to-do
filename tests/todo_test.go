@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing" // A.58 — Unit Test
-	"todo-api/models"
-	"todo-api/utils"
+	"to-do/models"
+	"to-do/utils"
 )
 
 // TestGenerateID - A.58 — Unit Test: test fungsi GenerateID

@@ -5,8 +5,8 @@ import (
 	"context"
 	"net/http"
 	"strings"
-	"todo-api/config"
-	"todo-api/utils"
+	"to-do/config"
+	"to-do/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 )
