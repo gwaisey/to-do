@@ -1,10 +1,13 @@
-// middleware/logger.go
+// Package middleware provides HTTP middlewares for authentication, rate limiting, logging, timeout, and CORS.
 package middleware
 
 import (
-	"log/slog"
+
 	"net/http"
-	"time" // A.40 — Time
+	"time"
+
+	"to-do/utils"
+
 )
 
 // Logger - B.19 — Middleware: fungsi yang membungkus handler
@@ -20,13 +23,13 @@ func Logger(next http.Handler) http.Handler {
 
 		duration := time.Since(start) // A.42 — Time Duration
 
-		// C.8 — Logging: log setiap request menggunakan slog
-		slog.Info("HTTP Request",
-			slog.String("method", r.Method),
-			slog.String("path", r.URL.Path),
-			slog.Int("status", wrapped.statusCode),
-			slog.Duration("duration", duration),
-			slog.String("remote_addr", r.RemoteAddr),
+		// Logging each request using utils
+		utils.Info("HTTP Request",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", wrapped.statusCode,
+			"duration", duration,
+			"remote_addr", r.RemoteAddr,
 		)
 	})
 }

@@ -1233,3 +1233,405 @@ body {
         max-width: 900px;
     }
 }
+
+/* BULK ACTIONS STYLING (iOS style) */
+.bulk-bar {
+    position: fixed;
+    bottom: -80px; /* Sembunyikan default */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: rgba(242, 242, 247, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 150;
+    transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.bulk-bar.active {
+    bottom: 0; /* Luncurkan ke atas */
+}
+
+.btn-bulk {
+    background: transparent;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.btn-bulk.blue {
+    color: var(--ios-blue);
+}
+
+.btn-bulk.blue:hover {
+    background-color: var(--ios-blue-light);
+}
+
+.btn-bulk.red {
+    color: var(--ios-red);
+}
+
+.btn-bulk.red:hover {
+    background-color: var(--ios-red-light);
+}
+
+#bulk-select-count {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ios-text-secondary);
+}
+
+/* Tampilan kartu tugas saat terpilih di mode pilihan */
+.todo-item.selected-item {
+    border-color: var(--ios-blue) !important;
+    background-color: var(--ios-blue-light) !important;
+}
+
+.todo-item.selected-item .checkbox-circle {
+    background-color: var(--ios-blue) !important;
+    border-color: var(--ios-blue) !important;
+}
+
+.todo-item.selected-item .checkbox-circle::after {
+    content: "✓";
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Dark Mode transitions & theme overrides */
+body, #app, .screen, .todo-item, .stat-card, .segmented-control, .ios-header, .todo-detail-panel, .dashboard-sidebar, .todo-section, .modal-sheet, .sheet-input-group, .sheet-section-card, .btn-logout, .btn-theme-toggle {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark-theme {
+    --ios-bg: #000000;
+    --ios-card: #1c1c1e;
+    --ios-text: #ffffff;
+    --ios-text-secondary: #98989d;
+    --ios-blue: #0a84ff;
+    --ios-blue-light: rgba(10, 132, 255, 0.15);
+    --ios-green: #30d158;
+    --ios-green-light: rgba(48, 209, 88, 0.15);
+    --ios-orange: #ff9f0a;
+    --ios-orange-light: rgba(255, 159, 10, 0.15);
+    --ios-red: #ff453a;
+    --ios-red-light: rgba(255, 69, 58, 0.15);
+    --ios-gray-light: #2c2c2e;
+    --ios-gray-divider: #38383a;
+    --ios-seg-bg: #2c2c2e;
+}
+
+.btn-theme-toggle {
+    background: transparent;
+    border: none;
+    color: var(--ios-blue);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+.btn-theme-toggle:hover {
+    background-color: var(--ios-blue-light);
+}
+
+.dark-theme .ios-header {
+    background-color: rgba(28, 28, 30, 0.85);
+}
+.dark-theme .bulk-bar {
+    background: rgba(28, 28, 30, 0.85);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.dark-theme .input-group input {
+    background-color: #2c2c2e;
+    color: #ffffff;
+    border-color: #3a3a3c;
+}
+.dark-theme .input-group input:focus {
+    background-color: #1c1c1e;
+}
+.dark-theme select option {
+    background-color: var(--ios-card);
+    color: var(--ios-text);
+}
+.dark-theme .detail-desc-text {
+    color: #e5e5ea;
+}
+.dark-theme .segment {
+    color: #aeaeaeb2;
+}
+.dark-theme .segment.active {
+    color: var(--ios-blue);
+    background-color: var(--ios-blue-light);
+}
+.dark-theme .segment-pill span {
+    color: #aeaeae;
+}
+.dark-theme .segment-pill input:checked + span {
+    background-color: #3a3a3c;
+    color: #ffffff;
+}
+.dark-theme .todo-item {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.dark-theme .tag-badge {
+    color: #e5e5ea;
+}
+.dark-theme .sheet-row {
+    border-bottom: 1px solid #38383a;
+}
+.dark-theme .ios-date-input {
+    color-scheme: dark;
+}
+
+/* Search Highlighting */
+.search-highlight {
+    background-color: rgba(255, 213, 79, 0.45); /* soft yellow */
+    color: inherit;
+    border-radius: 4px;
+    padding: 0 2px;
+    font-weight: 500;
+}
+
+.dark-theme .search-highlight {
+    background-color: rgba(255, 213, 79, 0.25); /* slightly dimmer in dark mode for readability */
+}
+
+/* Spinner for Infinite Scroll Loading */
+.scroll-sentinel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.spinner {
+    width: 22px;
+    height: 22px;
+    border: 2.5px solid rgba(0, 122, 255, 0.15);
+    border-top-color: var(--ios-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Sub-tugas (Sub-tasks / Checklist) Styling */
+.subtask-progress-badge {
+    background-color: var(--ios-blue-light);
+    color: var(--ios-blue);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dark-theme .subtask-progress-badge {
+    background-color: rgba(10, 132, 255, 0.15);
+    color: var(--ios-blue);
+}
+
+/* ── Progress Bar (Sub-task visual indicator on cards) ── */
+.subtask-progress-container {
+    width: 100%;
+    margin-top: 6px;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.subtask-progress-track {
+    flex: 1;
+    height: 6px;
+    border-radius: 99px;
+    background-color: var(--ios-gray-light);
+    overflow: hidden;
+    position: relative;
+}
+
+.subtask-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--ios-blue), #5ac8fa);
+    min-width: 0;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                background 0.4s ease;
+    position: relative;
+}
+
+/* Shimmer sweep effect on the fill */
+.subtask-progress-fill::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    animation: progressShimmer 2.4s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+    0%   { left: -60%; }
+    100% { left: 160%; }
+}
+
+/* Color shift when complete */
+.subtask-progress-fill.complete {
+    background: linear-gradient(90deg, var(--ios-green), #5ac8fa);
+}
+
+/* Subtle glow pulse on 100% */
+.subtask-progress-fill.complete::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 99px;
+    background: var(--ios-green);
+    opacity: 0;
+    animation: progressGlow 1.8s ease-in-out infinite;
+    z-index: -1;
+}
+
+@keyframes progressGlow {
+    0%, 100% { opacity: 0; }
+    50%      { opacity: 0.25; }
+}
+
+.subtask-progress-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ios-text-secondary);
+    white-space: nowrap;
+    min-width: 32px;
+    text-align: right;
+}
+
+/* Dark mode adjustments */
+.dark-theme .subtask-progress-track {
+    background-color: #2c2c2e;
+}
+
+.dark-theme .subtask-progress-fill::after {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+
+.modal-subtask-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.modal-subtask-item input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--ios-gray-divider);
+    color: var(--ios-text);
+    outline: none;
+}
+
+.dark-theme .modal-subtask-item input {
+    border-bottom: 1px solid #38383a;
+}
+
+.modal-subtask-item input:focus {
+    border-bottom: 1.5px solid var(--ios-blue);
+}
+
+.modal-subtask-item .btn-remove-subtask {
+    background: none;
+    border: none;
+    color: var(--ios-red);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+
+.modal-subtask-item .btn-remove-subtask:hover {
+    transform: scale(1.15);
+}
+
+.detail-subtask-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.detail-subtask-item .subtask-checkbox {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--ios-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.detail-subtask-item .subtask-checkbox:hover {
+    background-color: var(--ios-blue-light);
+}
+
+.detail-subtask-item .subtask-checkbox.checked {
+    background-color: var(--ios-green) !important;
+    border-color: var(--ios-green) !important;
+}
+
+.detail-subtask-item .subtask-checkbox.checked::after {
+    content: "✓";
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.detail-subtask-item .subtask-title {
+    font-size: 14px;
+    color: var(--ios-text);
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.detail-subtask-item.done .subtask-title {
+    color: var(--ios-text-secondary);
+    text-decoration: line-through;
+}
+
+
+

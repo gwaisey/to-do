@@ -1,4 +1,4 @@
-// database/db.go
+// Package database provides SQLite connection, migration, and helper methods.
 package database
 
 import (
@@ -72,6 +72,7 @@ func (db *DB) migrate() {
 			status      TEXT DEFAULT 'pending',
 			due_date    DATETIME,
 			tags        TEXT DEFAULT '[]',
+			sub_tasks   TEXT DEFAULT '[]',
 			created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (user_id) REFERENCES users(id)
@@ -79,12 +80,53 @@ func (db *DB) migrate() {
 		// Index untuk performa query (A.56)
 		`CREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status)`,
+		`CREATE INDEX IF NOT EXISTS idx_todos_sort_order ON todos(sort_order)`,
 	}
 
 	// A.14 — Perulangan: for range
 	for _, q := range queries {
 		if _, err := db.Conn.Exec(q); err != nil {
 			log.Fatalf("❌ Migrasi gagal: %v\nQuery: %s", err, q)
+		}
+	}
+
+	// Migrasi tambahan: tambahkan kolom sub_tasks dan sort_order ke database yang sudah ada jika belum terdaftar
+	var subTasksExists bool
+	var sortOrderExists bool
+	rows, err := db.Conn.Query("PRAGMA table_info(todos)")
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var cid int
+			var name, ctype string
+			var notnull int
+			var dfltValue interface{}
+			var pk int
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dfltValue, &pk); err == nil {
+				if name == "sub_tasks" {
+					subTasksExists = true
+				}
+				if name == "sort_order" {
+					sortOrderExists = true
+				}
+			}
+		}
+	}
+	if !subTasksExists {
+		_, err = db.Conn.Exec("ALTER TABLE todos ADD COLUMN sub_tasks TEXT DEFAULT '[]'")
+		if err != nil {
+			log.Printf("⚠️ Gagal menambahkan kolom sub_tasks ke tabel todos: %v", err)
+		} else {
+			fmt.Println("🚀 Berhasil menambahkan kolom sub_tasks ke tabel todos")
+		}
+	}
+	if !sortOrderExists {
+		_, err = db.Conn.Exec("ALTER TABLE todos ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0")
+		if err != nil {
+			log.Printf("⚠️ Gagal menambahkan kolom sort_order ke tabel todos: %v", err)
+		} else {
+			fmt.Println("🚀 Berhasil menambahkan kolom sort_order ke tabel todos")
+			db.Conn.Exec("CREATE INDEX IF NOT EXISTS idx_todos_sort_order ON todos(sort_order)")
 		}
 	}
 

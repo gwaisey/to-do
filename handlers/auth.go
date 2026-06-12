@@ -1,4 +1,4 @@
-// handlers/auth.go
+// Package handlers provides HTTP handlers for authentication and user management.
 package handlers
 
 import (

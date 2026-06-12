@@ -1,15 +1,16 @@
 // utils/random.go
+// Package utils provides helper utilities for the Todo API, including response handling, hashing, validation, and pipelines.
 package utils
 
 import (
 	"crypto/rand"
-	"crypto/sha1" // A.47 — Hash SHA1
+	"crypto/sha1"     // A.47 — Hash SHA1
 	"encoding/base64" // A.46 — Base64
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	mathrand "math/rand" // A.39 — Random
-	"strings" // A.44 — Fungsi String
+	"strings"            // A.44 — Fungsi String
 	"time"
 )
 
@@ -51,7 +52,7 @@ func GenerateOTP() string {
 // SanitizeInput - A.44 — Fungsi String: sanitasi input
 func SanitizeInput(s string) string {
 	s = strings.TrimSpace(s)             // hapus spasi di awal/akhir
-	s = strings.ToLower(s)              // lowercase
+	s = strings.ToLower(s)               // lowercase
 	s = strings.ReplaceAll(s, "  ", " ") // hapus double space
 	return s
 }

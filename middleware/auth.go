@@ -1,4 +1,4 @@
-// middleware/auth.go
+// Package middleware provides HTTP middlewares for authentication, rate limiting, logging, timeout, and CORS.
 package middleware
 
 import (
@@ -14,6 +14,7 @@ import (
 // contextKey - A.10 — Custom type untuk context key (hindari collision)
 type contextKey string
 
+// UserIDKey is the context key for storing the authenticated user's ID.
 const UserIDKey contextKey = "userID"
 
 // AuthJWT - C.32 — JWT: validasi token

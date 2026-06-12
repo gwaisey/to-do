@@ -3,13 +3,13 @@ package main
 
 import (
 	"context"
-	"flag"       // A.48 — Arguments & Flag
+	"flag" // A.48 — Arguments & Flag
 	"fmt"
-	"log/slog"
+	"to-do/utils"
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"       // A.59 — sync.WaitGroup, A.60 — sync.Mutex
+	"sync" // A.59 — sync.WaitGroup, A.60 — sync.Mutex
 	"syscall"
 	"time"
 	"to-do/config"
@@ -26,8 +26,7 @@ var (
 
 func main() {
 	// Inisialisasi structured logger (slog) JSON format ke stdout
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
+	utils.InitLogger()
 
 	// A.8 — Komentar: dokumentasi kode
 	// A.48 — Arguments & Flag: flag CLI
@@ -39,7 +38,7 @@ func main() {
 
 	// Validasi keamanan JWT_SECRET di environment production
 	if cfg.AppEnv == "production" && (cfg.JWTSecret == "" || cfg.JWTSecret == "default-secret") {
-		slog.Error("Keamanan Kritis: JWT_SECRET wajib disetel di environment production dan tidak boleh bernilai default!")
+		utils.Error("Keamanan Kritis: JWT_SECRET wajib disetel di environment production dan tidak boleh bernilai default!")
 		os.Exit(1)
 	}
 
@@ -113,6 +112,31 @@ func main() {
 		}
 	})))
 
+	mux.Handle("/todos/bulk-complete", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			todoHandler.BulkComplete(w, r)
+		} else {
+			http.Error(w, "Method tidak diizinkan", http.StatusMethodNotAllowed)
+		}
+	})))
+
+	mux.Handle("/todos/bulk-delete", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			todoHandler.BulkDelete(w, r)
+		} else {
+			http.Error(w, "Method tidak diizinkan", http.StatusMethodNotAllowed)
+		}
+	})))
+
+	// Add reorder route
+	mux.Handle("/todos/reorder", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			todoHandler.Reorder(w, r)
+		} else {
+			http.Error(w, "Method tidak diizinkan", http.StatusMethodNotAllowed)
+		}
+	})))
+
 	mux.Handle("/todos/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// A.44 — Fungsi String: cek suffix untuk routing
 		path := r.URL.Path
@@ -137,12 +161,12 @@ func main() {
 		}
 	})))
 
-	// B.19 — Middleware stack: CORS + Rate Limiter + Logger + Request Counter
+	// B.19 — Middleware stack: CORS + Rate Limiter + Timeout + Logger + Request Counter
 	// Batasi rata-rata 10 request/detik dengan kapasitas burst 20 request per IP
 	rateLimiter := middleware.RateLimiter(10.0, 20.0)
 
-	// C.14 — CORS
-	finalHandler := corsMiddleware(rateLimiter(middleware.Logger(countRequests(mux))))
+	// C.14 — CORS + Timeout
+	finalHandler := middleware.Recover(middleware.NewCORS(rateLimiter(middleware.Timeout(middleware.Logger(countRequests(mux)), 10*time.Second))))
 
 	server := &http.Server{
 		Addr:         ":" + cfg.AppPort,
@@ -159,23 +183,23 @@ func main() {
 
 	// A.30 — Goroutine: server berjalan tanpa memblokir main goroutine
 	go func() {
-		slog.Info("Server running", "url", fmt.Sprintf("http://localhost:%s", cfg.AppPort))
+		utils.Info("Server running", "url", fmt.Sprintf("http://localhost:%s", cfg.AppPort))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slog.Error("Server error", "error", err)
+			utils.Error("Server error", "error", err)
 			os.Exit(1)
 		}
 	}()
 
 	// A.33 — Channel Select: tunggu sinyal shutdown
 	<-quit
-	slog.Info("Shutting down server...")
+	utils.Info("Shutting down server...")
 
 	// A.59 — sync.WaitGroup: tunggu request yang sedang berjalan selesai
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		slog.Error("Shutdown error", "error", err)
+		utils.Error("Shutdown error", "error", err)
 	}
 
 	// A.60 — sync.Mutex: baca counter dengan aman
@@ -184,20 +208,7 @@ func main() {
 	mu.Unlock()
 }
 
-// corsMiddleware - C.14 — CORS Middleware
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
+// CORS middleware moved to middleware.NewCORS; local implementation removed
 
 // countRequests - A.60 — sync.Mutex: middleware untuk counting request secara thread-safe
 func countRequests(next http.Handler) http.Handler {

@@ -1,7 +1,11 @@
 // utils/pipeline.go
+// Package utils provides helper utilities for the Todo API, including response handling, hashing, validation, and pipelines.
 package utils
 
-import "to-do/models"
+import (
+	"time"
+	"to-do/models"
+)
 
 // C.62 — Concurrency Pattern: Pipeline
 // C.63 — Fan-in Fan-out
@@ -38,7 +42,11 @@ func EnrichWithOverdue(in <-chan models.Todo) <-chan models.Todo {
 	go func() {
 		for todo := range in {
 			// Data enrichment (A.40 — Time)
-			_ = todo.IsOverdue()
+			todo.Overdue = todo.IsOverdue()
+			if todo.DueDate != nil {
+				duration := time.Until(*todo.DueDate)
+				todo.TimeRemaining = duration.Round(time.Minute).String()
+			}
 			out <- todo
 		}
 		close(out)

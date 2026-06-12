@@ -1,9 +1,10 @@
 // utils/validator.go
+// Package utils provides helper utilities for the Todo API, including response handling, hashing, validation, and pipelines.
 package utils
 
 import (
 	"errors"
-	"regexp"   // A.45 — Regexp
+	"regexp" // A.45 — Regexp
 )
 
 // A.45 — Regexp: pola untuk validasi email
@@ -23,7 +24,7 @@ func ValidateEmail(email string) error {
 	return nil
 }
 
-// ValidatePass: A.44 — Fungsi String
+// ValidatePass validates that the password meets the minimum length requirement (at least 8 characters).
 func ValidatePass(pass string) error {
 	if len(pass) < 8 {
 		return ErrWeakPassword

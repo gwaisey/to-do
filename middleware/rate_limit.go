@@ -1,4 +1,4 @@
-// middleware/rate_limit.go
+// Package middleware provides HTTP middlewares for authentication, rate limiting, logging, timeout, and CORS.
 package middleware
 
 import (

@@ -1,174 +1,227 @@
-// models/todo.go
+// Package models provides data structures, request/response types, and validation logic for the To-Do API.
 package models
 
 import (
-	"errors"
-	"strings"
-	"time"
+    "errors"
+    "strings"
+    "time"
 )
 
-// A.10 — Tipe Data: custom type dari string
+// Priority represents the importance level of a to‑do item.
 type Priority string
+
+// Status represents the current state of a to‑do item.
 type Status string
 
-// A.11 — Konstanta dengan tipe kustom
+// Predefined priority values.
 const (
-	PriorityLow    Priority = "low"
-	PriorityMedium Priority = "medium"
-	PriorityHigh   Priority = "high"
-
-	StatusPending    Status = "pending"
-	StatusInProgress Status = "in_progress"
-	StatusDone       Status = "done"
+    PriorityLow    Priority = "low"
+    PriorityMedium Priority = "medium"
+    PriorityHigh   Priority = "high"
 )
 
-// User - A.24 — Struct: representasi data user
-// A.26 — Field yang diawali huruf kapital = Public (Exported)
+// Predefined status values.
+const (
+    StatusPending    Status = "pending"
+    StatusInProgress Status = "in_progress"
+    StatusDone       Status = "done"
+)
+
+// User represents an account holder.
 type User struct {
-	ID        string    `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Password  string    `json:"-"` // A.26 — field ini tidak dikirim ke JSON response
-	CreatedAt time.Time `json:"created_at"` // A.40 — Time
-	UpdatedAt time.Time `json:"updated_at"`
+    ID        string    `json:"id"`
+    Username  string    `json:"username"`
+    Email     string    `json:"email"`
+    Password  string    `json:"-"`          // Field omitted from JSON responses.
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
 }
 
-// Todo - A.24 — Struct untuk To-Do
+// SubTask represents a child task of a to‑do item.
+type SubTask struct {
+    ID     string `json:"id"`
+    Title  string `json:"title"`
+    Status Status `json:"status"` // pending, done
+}
+
+// Todo is the main to‑do entity.
 type Todo struct {
-	ID          string    `json:"id"`
-	UserID      string    `json:"user_id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description,omitempty"`
-	Priority    Priority  `json:"priority"`
-	Status      Status    `json:"status"`
-	DueDate     *time.Time `json:"due_date,omitempty"` // A.23 — Pointer: bisa nil
-	Tags        []string  `json:"tags"` // A.16 — Slice
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+    ID            string     `json:"id"`
+    UserID        string     `json:"user_id"`
+    Title         string     `json:"title"`
+    Description   string     `json:"description,omitempty"`
+    Priority      Priority   `json:"priority"`
+    Status        Status     `json:"status"`
+    DueDate       *time.Time `json:"due_date,omitempty"`
+    Tags          []string   `json:"tags"`
+    SubTasks      []SubTask  `json:"sub_tasks"`
+    SortOrder     int        `json:"sort_order"`
+    Overdue       bool       `json:"is_overdue"`
+    TimeRemaining string     `json:"time_remaining,omitempty"`
+    CreatedAt     time.Time  `json:"created_at"`
+    UpdatedAt     time.Time  `json:"updated_at"`
 }
 
-// Validator - A.27 — Interface: kontrak method yang harus diimplementasikan
+// Validator defines a contract for request validation.
 type Validator interface {
-	Validate() error
+    Validate() error
 }
 
-// Request structs (dipisah dari model utama — praktik bersih)
+// CreateTodoRequest captures fields required to create a new to‑do.
 type CreateTodoRequest struct {
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Priority    Priority `json:"priority"`
-	DueDate     string   `json:"due_date"` // diterima sebagai string, diparse ke time
-	Tags        []string `json:"tags"` // A.16 — Slice
+    Title       string    `json:"title"`
+    Description string    `json:"description"`
+    Priority    Priority  `json:"priority"`
+    DueDate     string    `json:"due_date"` // Expected as ISO‑8601 string.
+    Tags        []string  `json:"tags"`
+    SubTasks    []SubTask `json:"sub_tasks"`
 }
 
+// UpdateTodoRequest captures optional fields for updating a to‑do.
 type UpdateTodoRequest struct {
-	Title       *string   `json:"title"`       // A.23 — Pointer: opsional
-	Description *string   `json:"description"`
-	Priority    *Priority `json:"priority"`
-	Status      *Status   `json:"status"`
-	DueDate     *string   `json:"due_date"`
-	Tags        []string  `json:"tags"`
+    Title       *string   `json:"title"`
+    Description *string   `json:"description"`
+    Priority    *Priority `json:"priority"`
+    Status      *Status   `json:"status"`
+    DueDate     *string   `json:"due_date"`
+    Tags        []string  `json:"tags"`
+    SubTasks    []SubTask `json:"sub_tasks"`
 }
 
+// RegisterRequest holds data needed for user registration.
 type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+    Username string `json:"username"`
+    Email    string `json:"email"`
+    Password string `json:"password"`
 }
 
+// LoginRequest holds credentials for authentication.
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+    Email    string `json:"email"`
+    Password string `json:"password"`
 }
 
+// LoginResponse returns a JWT token and the authenticated user.
 type LoginResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
+    Token string `json:"token"`
+    User  User   `json:"user"`
 }
 
-// A.27 — Interface: implementasi Validate() untuk CreateTodoRequest
+// BulkActionRequest contains a list of IDs for bulk operations.
+type BulkActionRequest struct {
+    IDs []string `json:"ids"`
+}
+
+// ReorderRequest is used to reorder to‑dos via drag‑and‑drop.
+type ReorderRequest struct {
+    OrderedIDs []string `json:"ordered_ids"`
+}
+
+// Validate checks that the reorder payload is not empty and contains unique IDs.
+func (r *ReorderRequest) Validate() error {
+    if len(r.OrderedIDs) == 0 {
+        return errors.New("daftar ID tidak boleh kosong")
+    }
+    seen := make(map[string]bool)
+    for _, id := range r.OrderedIDs {
+        if id == "" {
+            return errors.New("ID todo tidak boleh kosong")
+        }
+        if seen[id] {
+            return errors.New("ID duplikat ditemukan dalam urutan")
+        }
+        seen[id] = true
+    }
+    return nil
+}
+
+// Validate ensures required fields for creating a to‑do are present.
 func (r *CreateTodoRequest) Validate() error {
-	return validateTodoInput(r.Title, string(r.Priority))
+    return validateTodoInput(r.Title, string(r.Priority))
 }
 
-// Validate untuk UpdateTodoRequest
+// Validate checks that BulkActionRequest contains at least one ID.
+func (r *BulkActionRequest) Validate() error {
+    if len(r.IDs) == 0 {
+        return errors.New("daftar ID tidak boleh kosong")
+    }
+    return nil
+}
+
+// Validate checks optional fields of UpdateTodoRequest.
 func (r *UpdateTodoRequest) Validate() error {
-	if r.Title != nil {
-		if strings.TrimSpace(*r.Title) == "" {
-			return ErrEmptyTitle
-		}
-		if len(*r.Title) > 200 {
-			return ErrTitleTooLong
-		}
-	}
-	if r.Priority != nil {
-		valid := map[Priority]bool{PriorityLow: true, PriorityMedium: true, PriorityHigh: true}
-		if !valid[*r.Priority] {
-			return ErrInvalidPriority
-		}
-	}
-	return nil
+    if r.Title != nil {
+        if strings.TrimSpace(*r.Title) == "" {
+            return ErrEmptyTitle
+        }
+        if len(*r.Title) > 200 {
+            return ErrTitleTooLong
+        }
+    }
+    if r.Priority != nil {
+        valid := map[Priority]bool{PriorityLow: true, PriorityMedium: true, PriorityHigh: true}
+        if !valid[*r.Priority] {
+            return ErrInvalidPriority
+        }
+    }
+    return nil
 }
 
-
-// A.65 — Go Generics: fungsi generik untuk filter slice
+// FilterByStatus returns a slice containing items that satisfy the predicate.
 func FilterByStatus[T any](items []T, predicate func(T) bool) []T {
-	// A.16 — Slice: make dengan length 0
-	result := make([]T, 0)
-	for _, item := range items {
-		if predicate(item) {
-			result = append(result, item)
-		}
-	}
-	return result
+    result := make([]T, 0)
+    for _, item := range items {
+        if predicate(item) {
+            result = append(result, item)
+        }
+    }
+    return result
 }
 
-// A.17 — Map: grouping todos berdasarkan priority
+// GroupByPriority groups to‑dos by their priority.
 func GroupByPriority(todos []Todo) map[Priority][]Todo {
-	// A.17 — Map: inisialisasi
-	grouped := make(map[Priority][]Todo)
-	for _, todo := range todos {
-		grouped[todo.Priority] = append(grouped[todo.Priority], todo)
-	}
-	return grouped
+    grouped := make(map[Priority][]Todo)
+    for _, todo := range todos {
+        grouped[todo.Priority] = append(grouped[todo.Priority], todo)
+    }
+    return grouped
 }
 
-// A.42 — Time Duration: hitung sisa waktu ke due date
+// TimeUntilDue returns the remaining duration until the due date, or nil if none is set.
 func (t *Todo) TimeUntilDue() *time.Duration {
-	if t.DueDate == nil {
-		return nil // A.23 — Pointer nil
-	}
-	remaining := time.Until(*t.DueDate) // A.42 — time.Duration
-	return &remaining
+    if t.DueDate == nil {
+        return nil
+    }
+    remaining := time.Until(*t.DueDate)
+    return &remaining
 }
 
-// A.40 — Time: cek apakah todo sudah overdue
+// IsOverdue reports whether the to‑do's due date has passed and it is not completed.
 func (t *Todo) IsOverdue() bool {
-	if t.DueDate == nil || t.Status == StatusDone {
-		return false
-	}
-	return time.Now().After(*t.DueDate) // A.40 — time.Now()
+    if t.DueDate == nil || t.Status == StatusDone {
+        return false
+    }
+    return time.Now().After(*t.DueDate)
 }
 
-// Error definitions relocated here from utils to avoid circular dependency:
-// models -> utils -> models
+// Error variables used for validation.
 var (
-	ErrEmptyTitle      = errors.New("judul tidak boleh kosong")
-	ErrTitleTooLong    = errors.New("judul terlalu panjang (maks 200 karakter)")
-	ErrInvalidPriority = errors.New("priority harus: low, medium, atau high")
+    ErrEmptyTitle      = errors.New("judul tidak boleh kosong")
+    ErrTitleTooLong    = errors.New("judul terlalu panjang (maks 200 karakter)")
+    ErrInvalidPriority = errors.New("priority harus: low, medium, atau high")
 )
 
-// validateTodoInput - validation logic relocated to models package
+// validateTodoInput validates title and priority fields.
 func validateTodoInput(title, priority string) error {
-	if strings.TrimSpace(title) == "" {
-		return ErrEmptyTitle
-	}
-	if len(title) > 200 {
-		return ErrTitleTooLong
-	}
-	valid := map[string]bool{"low": true, "medium": true, "high": true, "": true}
-	if !valid[priority] {
-		return ErrInvalidPriority
-	}
-	return nil
+    if strings.TrimSpace(title) == "" {
+        return ErrEmptyTitle
+    }
+    if len(title) > 200 {
+        return ErrTitleTooLong
+    }
+    valid := map[string]bool{"low": true, "medium": true, "high": true, "": true}
+    if !valid[priority] {
+        return ErrInvalidPriority
+    }
+    return nil
 }

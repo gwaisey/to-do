@@ -1,4 +1,4 @@
-// utils/hash.go
+// Package utils provides helper utilities for the Todo API, including response handling, hashing, validation, and pipelines.
 package utils
 
 import "golang.org/x/crypto/bcrypt"

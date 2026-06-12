@@ -1,4 +1,4 @@
-// config/config.go
+// Package config provides application configuration loading and defaults.
 package config
 
 import (
