@@ -28,10 +28,12 @@ let currentPage = 1;
 const limitPerPage = 10;
 let hasMoreTodos = false;
 let isLoadingMore = false;
+let hasAnyTodos = false;
 
 // DOM Elements
 const authScreen = document.getElementById("auth-screen");
 const dashboardScreen = document.getElementById("dashboard-screen");
+const dashboardContent = document.getElementById("dashboard-content");
 const loginForm = document.getElementById("login-form");
 const registerForm = document.getElementById("register-form");
 const toRegisterLink = document.getElementById("to-register");
@@ -50,10 +52,17 @@ const bulkSelectCount = document.getElementById("bulk-select-count");
 const bulkCompleteBtn = document.getElementById("bulk-complete-btn");
 const bulkDeleteBtn = document.getElementById("bulk-delete-btn");
 
-// Theme Toggle elements
+// Header and navigation
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
-const sunIcon = themeToggleBtn ? themeToggleBtn.querySelector(".sun-icon") : null;
-const moonIcon = themeToggleBtn ? themeToggleBtn.querySelector(".moon-icon") : null;
+const themeActionLabel = document.getElementById("theme-action-label");
+const profileMenuTrigger = document.getElementById("profile-menu-trigger");
+const profileMenu = document.getElementById("profile-menu");
+const sidebarToggleBtn = document.getElementById("sidebar-toggle-btn");
+const sidebarCloseBtn = document.getElementById("sidebar-close-btn");
+const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+const detailBackBtn = document.getElementById("detail-back-btn");
+const detailPanel = document.getElementById("todo-detail-panel");
+const detailEmptyHint = document.getElementById("detail-empty-hint");
 
 // Infinite Scroll elements
 const scrollSentinel = document.getElementById("scroll-sentinel");
@@ -62,8 +71,9 @@ const loadingSpinner = document.getElementById("loading-spinner");
 // Stats DOM
 const statTotal = document.getElementById("stat-total");
 const statPending = document.getElementById("stat-pending");
+const statInProgress = document.getElementById("stat-in-progress");
 const statCompleted = document.getElementById("stat-completed");
-const statCards = document.querySelectorAll(".stat-card");
+const statusFilters = document.querySelectorAll(".status-filter");
 
 // Modal DOM
 const todoModal = document.getElementById("todo-modal");
@@ -82,6 +92,7 @@ const addSubtaskBtn = document.getElementById("add-subtask-btn");
 const detailSubtasksCard = document.getElementById("detail-subtasks-card");
 const detailSubtasksContainer = document.getElementById("detail-subtasks-container");
 let modalSubtasks = [];
+let modalReturnFocus = null;
 
 // ── UTILITIES ──
 
@@ -89,7 +100,7 @@ let modalSubtasks = [];
 function showToast(message, isSuccess = true) {
     const toast = document.getElementById("toast");
     toast.innerText = message;
-    toast.style.borderLeft = `4px solid ${isSuccess ? 'var(--ios-green)' : 'var(--ios-red)'}`;
+    toast.style.borderLeft = `4px solid ${isSuccess ? "var(--success)" : "var(--danger)"}`;
     toast.classList.add("show");
     setTimeout(() => {
         toast.classList.remove("show");
@@ -288,13 +299,14 @@ async function loadTodos() {
     const queryString = queryParams.length ? `?${queryParams.join("&")}` : "";
     
     try {
+        todoList.setAttribute("aria-busy", "true");
         const res = await request(`/todos${queryString}`);
         if (res && res.success) {
             currentTodos = res.data.todos || [];
             
             // Render ulang dari awal
-            renderTodoList(currentTodos);
             updateStats(res.data.stats);
+            renderTodoList(currentTodos);
             
             // Sinkronisasi status has_more
             const pag = res.data.pagination;
@@ -304,7 +316,7 @@ async function loadTodos() {
                 scrollSentinel.style.display = hasMoreTodos ? "flex" : "none";
             }
             if (loadingSpinner) {
-                loadingSpinner.style.display = "none";
+                loadingSpinner.hidden = true;
             }
             
             // Sync active selection
@@ -320,7 +332,9 @@ async function loadTodos() {
             }
         }
     } catch (err) {
-        todoList.innerHTML = `<div class="empty-state"><p class="text-danger">Gagal mengambil daftar tugas.</p></div>`;
+        todoList.innerHTML = `<div class="empty-state"><h2>Daftar tugas belum dapat dimuat</h2><p>Periksa koneksi lalu coba lagi.</p></div>`;
+    } finally {
+        todoList.setAttribute("aria-busy", "false");
     }
 }
 
@@ -330,7 +344,7 @@ async function loadMoreTodos() {
     
     isLoadingMore = true;
     if (loadingSpinner) {
-        loadingSpinner.style.display = "block";
+        loadingSpinner.hidden = false;
     }
     
     currentPage++;
@@ -376,23 +390,36 @@ async function loadMoreTodos() {
     } finally {
         isLoadingMore = false;
         if (loadingSpinner) {
-            loadingSpinner.style.display = "none";
+            loadingSpinner.hidden = true;
         }
     }
 }
 
-// Helper untuk membuat element kartu Todo DOM tunggal
+function svgIcon(name) {
+    const paths = {
+        calendar: '<rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4m8-4v4M4 9h16"></path>',
+        check: '<path d="m5 12 4 4L19 6"></path>',
+        edit: '<path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>',
+        play: '<path d="M8 5v14l11-7z"></path>',
+        pause: '<rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect>',
+        trash: '<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"></path>'
+    };
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || ""}</svg>`;
+}
+
 function createTodoElement(todo, searchQuery) {
     const isSelected = selectedTodos.has(todo.id);
-    const todoEl = document.createElement("div");
-    todoEl.className = `todo-item ${todo.status === 'done' ? 'done' : ''} ${todo.status === 'in_progress' ? 'in-progress' : ''} ${isSelected ? 'selected-item' : ''}`;
+    const isDone = todo.status === "done";
+    const todoEl = document.createElement("article");
+    todoEl.className = `todo-item ${isDone ? "done" : ""} ${todo.status === "in_progress" ? "in-progress" : ""} ${isSelected ? "selected-item" : ""}`;
     todoEl.dataset.id = todo.id;
-    
-    // Due date rendering
+    todoEl.tabIndex = 0;
+    todoEl.setAttribute("aria-label", `Tugas: ${todo.title}`);
+
     let dueDateHTML = "";
     if (todo.due_date) {
         const dateObj = new Date(todo.due_date);
-        const isOverdue = dateObj < new Date() && todo.status !== "done";
+        const isOverdue = dateObj < new Date() && !isDone;
         const formattedDate = dateObj.toLocaleDateString("id-ID", {
             day: "numeric",
             month: "short",
@@ -401,76 +428,53 @@ function createTodoElement(todo, searchQuery) {
             minute: "2-digit"
         });
         const remainingText = formatRemainingTime(todo.due_date, todo.status);
-        const displayRemaining = remainingText ? ` (${remainingText})` : "";
-        
-        dueDateHTML = `
-            <div class="due-date ${isOverdue ? 'overdue' : ''}">
-                📅 ${formattedDate}${displayRemaining}
-            </div>
-        `;
+        dueDateHTML = `<span class="due-date ${isOverdue ? "overdue" : ""}">${svgIcon("calendar")}<span>${escapeHTML(formattedDate)}${remainingText ? ` (${escapeHTML(remainingText)})` : ""}</span></span>`;
     }
-    
-    // Tags rendering
-    let tagsHTML = "";
-    if (todo.tags && todo.tags.length > 0) {
-        tagsHTML = todo.tags.map(tag => `<span class="tag-badge">${tag}</span>`).join("");
-    }
-    
-    // Priority rendering
+
+    const tagsHTML = (todo.tags || [])
+        .map(tag => `<span class="tag-badge">${escapeHTML(String(tag))}</span>`)
+        .join("");
     const priorityLabels = { low: "Rendah", medium: "Sedang", high: "Tinggi" };
-    const priorityClass = todo.priority || "medium";
+    const priorityClass = Object.prototype.hasOwnProperty.call(priorityLabels, todo.priority) ? todo.priority : "medium";
     const priorityHTML = `<span class="priority-pill ${priorityClass}">${priorityLabels[priorityClass]}</span>`;
-    
-    // Progress badge rendering
+
     let subTaskProgressHTML = "";
     let subTaskProgressBarHTML = "";
     if (todo.sub_tasks && todo.sub_tasks.length > 0) {
         const totalSub = todo.sub_tasks.length;
-        const completedSub = todo.sub_tasks.filter(st => st.status === 'done').length;
+        const completedSub = todo.sub_tasks.filter(st => st.status === "done").length;
         const pct = Math.round((completedSub / totalSub) * 100);
-        const isComplete = pct === 100;
-        subTaskProgressHTML = `<span class="subtask-progress-badge">☑️ ${completedSub}/${totalSub}</span>`;
+        subTaskProgressHTML = `<span class="subtask-progress-badge">${svgIcon("check")} ${completedSub}/${totalSub}</span>`;
         subTaskProgressBarHTML = `
-            <div class="subtask-progress-container">
-                <div class="subtask-progress-track">
-                    <div class="subtask-progress-fill ${isComplete ? 'complete' : ''}" style="width: ${pct}%"></div>
+            <div class="subtask-progress-container" aria-label="Progres sub-tugas ${pct}%">
+                <div class="subtask-progress-track" aria-hidden="true">
+                    <div class="subtask-progress-fill ${pct === 100 ? "complete" : ""}" style="width: ${pct}%"></div>
                 </div>
                 <span class="subtask-progress-label">${pct}%</span>
             </div>
         `;
     }
-    
-    // Progress button
-    let progressButtonHTML = "";
-    if (todo.status === "pending") {
-        progressButtonHTML = `
-            <button class="btn-icon play" onclick="toggleProgress('${todo.id}', '${todo.status}')" title="Mulai Proses">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            </button>
-        `;
-    } else if (todo.status === "in_progress") {
-        progressButtonHTML = `
-            <button class="btn-icon pause" onclick="toggleProgress('${todo.id}', '${todo.status}')" title="Tunda Tugas">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-            </button>
-        `;
-    }
+
+    const checkLabel = isSelectionMode
+        ? `Pilih ${todo.title}`
+        : `${isDone ? "Tandai belum selesai" : "Tandai selesai"}: ${todo.title}`;
+    const progressButtonHTML = todo.status === "pending"
+        ? `<button class="icon-button play" type="button" title="Mulai proses" aria-label="Mulai proses: ${escapeHTML(todo.title)}">${svgIcon("play")}</button>`
+        : todo.status === "in_progress"
+            ? `<button class="icon-button pause" type="button" title="Tunda tugas" aria-label="Tunda tugas: ${escapeHTML(todo.title)}">${svgIcon("pause")}</button>`
+            : "";
 
     todoEl.innerHTML = `
         <div class="todo-check">
-            <div class="checkbox-circle ${todo.status === 'done' ? 'checked' : ''}" onclick="handleCheckboxClick(event, '${todo.id}', '${todo.status}')"></div>
+            <button class="checkbox-circle ${isDone ? "checked" : ""} ${isSelected ? "selected" : ""}" type="button" aria-label="${escapeHTML(checkLabel)}" aria-pressed="${isSelectionMode ? isSelected : isDone}" title="${escapeHTML(checkLabel)}"></button>
         </div>
         <div class="todo-body">
             <div class="todo-title-row">
                 <h3 class="todo-item-title">${highlightText(todo.title, searchQuery)}</h3>
                 <div class="todo-actions">
                     ${progressButtonHTML}
-                    <button class="btn-icon" onclick="openEditModal('${todo.id}')" title="Edit">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                    </button>
-                    <button class="btn-icon delete" onclick="deleteTodo('${todo.id}')" title="Hapus">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                    </button>
+                    <button class="icon-button edit" type="button" title="Edit tugas" aria-label="Edit tugas: ${escapeHTML(todo.title)}">${svgIcon("edit")}</button>
+                    <button class="icon-button danger delete" type="button" title="Hapus tugas" aria-label="Hapus tugas: ${escapeHTML(todo.title)}">${svgIcon("trash")}</button>
                 </div>
             </div>
             ${todo.description ? `<p class="todo-item-desc">${highlightText(todo.description, searchQuery)}</p>` : ""}
@@ -483,78 +487,91 @@ function createTodoElement(todo, searchQuery) {
             </div>
         </div>
     `;
-    
-    todoEl.addEventListener("click", (e) => {
-        if (e.target.closest("button")) {
-            return;
-        }
+
+    const checkbox = todoEl.querySelector(".checkbox-circle");
+    checkbox.addEventListener("click", event => handleCheckboxClick(event, todo.id, todo.status));
+
+    const progressButton = todoEl.querySelector(".todo-actions .play, .todo-actions .pause");
+    if (progressButton) {
+        progressButton.addEventListener("click", () => toggleProgress(todo.id, todo.status));
+    }
+    todoEl.querySelector(".todo-actions .edit").addEventListener("click", () => openEditModal(todo.id));
+    todoEl.querySelector(".todo-actions .delete").addEventListener("click", () => deleteTodo(todo.id));
+
+    todoEl.addEventListener("click", event => {
+        if (event.target.closest("button")) return;
         if (isSelectionMode) {
             toggleTodoSelection(todo.id);
-            return;
-        }
-        if (e.target.closest(".checkbox-circle")) {
-            return;
-        }
-        if (window.innerWidth >= 768) {
-            selectTodo(todo.id);
         } else {
-            openEditModal(todo.id);
+            selectTodo(todo.id);
         }
     });
-    
+    todoEl.addEventListener("keydown", event => {
+        if (event.target !== todoEl || (event.key !== "Enter" && event.key !== " ")) return;
+        event.preventDefault();
+        if (isSelectionMode) {
+            toggleTodoSelection(todo.id);
+        } else {
+            selectTodo(todo.id);
+        }
+    });
+
     return todoEl;
 }
 
-// Render list todo dari awal
 function renderTodoList(todos) {
     if (!todos || todos.length === 0) {
+        const title = hasAnyTodos ? "Tidak ada tugas yang cocok" : "Belum ada tugas";
+        const description = hasAnyTodos
+            ? "Coba ubah kata pencarian atau filter yang dipilih."
+            : "Tambahkan tugas pertama agar semua pengingatmu tersusun rapi.";
         todoList.innerHTML = `
             <div class="empty-state">
-                <p>Tidak ada tugas yang ditemukan.</p>
+                <span class="empty-state-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="17" rx="2"></rect><path d="M8 9h8M8 13h5"></path><path d="M9 2v4m6-4v4"></path></svg>
+                </span>
+                <h2>${title}</h2>
+                <p>${description}</p>
+                ${hasAnyTodos ? "" : `<button id="empty-create-btn" class="btn btn-primary" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Buat tugas pertama</button>`}
             </div>
         `;
         return;
     }
-    
+
     todoList.innerHTML = "";
     appendTodoList(todos);
 }
 
-// Tambahkan item todo baru ke daftar yang sudah ada
 function appendTodoList(todos) {
     if (!todos) return;
     const searchQuery = searchInput ? searchInput.value.trim() : "";
-    
-    todos.forEach(todo => {
-        const todoEl = createTodoElement(todo, searchQuery);
-        todoList.appendChild(todoEl);
-    });
+    todos.forEach(todo => todoList.appendChild(createTodoElement(todo, searchQuery)));
 }
 
-// Update UI stats indicators
 function updateStats(stats) {
     if (!stats) return;
-    
-    statTotal.innerText = stats.total || 0;
-    
-    // "Sedang Jalan" = pending + in_progress
-    const pendingCount = (stats.pending || 0) + (stats.in_progress || 0);
-    statPending.innerText = pendingCount;
-    statCompleted.innerText = stats.completed || 0;
 
-    // Populate dynamic tag filter select options
+    hasAnyTodos = Number(stats.total) > 0;
+    statTotal.textContent = stats.total || 0;
+    statPending.textContent = stats.pending || 0;
+    statInProgress.textContent = stats.in_progress || 0;
+    statCompleted.textContent = stats.completed || 0;
+
+    statusFilters.forEach(button => {
+        const isActive = button.dataset.status === activeStatus;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+    });
+
     if (stats.tags) {
         const previousSelection = activeTag;
-        
         tagFilter.innerHTML = '<option value="">Semua Tag</option>';
         stats.tags.forEach(tag => {
-            const opt = document.createElement("option");
-            opt.value = tag;
-            opt.innerText = tag;
-            if (tag === previousSelection) {
-                opt.selected = true;
-            }
-            tagFilter.appendChild(opt);
+            const option = document.createElement("option");
+            option.value = tag;
+            option.textContent = tag;
+            option.selected = tag === previousSelection;
+            tagFilter.appendChild(option);
         });
     }
 }
@@ -662,8 +679,11 @@ function renderModalSubtasks() {
         const itemEl = document.createElement("div");
         itemEl.className = "modal-subtask-item";
         itemEl.innerHTML = `
-            <input type="text" placeholder="Nama sub-tugas..." value="${escapeHTML(st.title)}">
-            <button type="button" class="btn-remove-subtask" title="Hapus Sub-tugas">&times;</button>
+            <label class="sr-only" for="modal-subtask-${index}">Nama sub-tugas</label>
+            <input type="text" id="modal-subtask-${index}" placeholder="Nama sub-tugas..." value="${escapeHTML(st.title)}">
+            <button type="button" class="btn-remove-subtask" title="Hapus sub-tugas" aria-label="Hapus sub-tugas ${index + 1}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+            </button>
         `;
         
         // Update model title on input
@@ -693,6 +713,7 @@ function renderModalSubtasks() {
 // ── MODAL SHEET & FORMS ──
 
 function openCreateModal() {
+    modalReturnFocus = document.activeElement;
     modalTitle.innerText = "Tugas Baru";
     editTodoId.value = "";
     todoForm.reset();
@@ -713,6 +734,8 @@ function openCreateModal() {
     renderModalSubtasks();
 
     todoModal.classList.add("active");
+    todoModal.setAttribute("aria-hidden", "false");
+    todoTitleInput.focus();
 }
 
 async function openEditModal(id) {
@@ -720,6 +743,7 @@ async function openEditModal(id) {
         const res = await request(`/todos/${id}`);
         if (res && res.success) {
             const todo = res.data;
+            modalReturnFocus = document.activeElement;
             modalTitle.innerText = "Edit Tugas";
             editTodoId.value = todo.id;
             todoTitleInput.value = todo.title;
@@ -747,6 +771,8 @@ async function openEditModal(id) {
             renderModalSubtasks();
             
             todoModal.classList.add("active");
+            todoModal.setAttribute("aria-hidden", "false");
+            todoTitleInput.focus();
         }
     } catch (e) {
         // handled
@@ -755,6 +781,11 @@ async function openEditModal(id) {
 
 function closeModal() {
     todoModal.classList.remove("active");
+    todoModal.setAttribute("aria-hidden", "true");
+    const focusTarget = modalReturnFocus instanceof HTMLElement && modalReturnFocus.isConnected
+        ? modalReturnFocus
+        : addTodoFab;
+    focusTarget.focus();
 }
 
 // Save Todo (Create or Update)
@@ -845,6 +876,20 @@ saveTodoBtn.addEventListener("click", async () => {
 
 addTodoFab.addEventListener("click", openCreateModal);
 cancelTodoBtn.addEventListener("click", closeModal);
+todoList.addEventListener("click", event => {
+    if (event.target.closest("#empty-create-btn")) openCreateModal();
+});
+todoModal.addEventListener("click", event => {
+    if (event.target === todoModal) closeModal();
+});
+detailBackBtn.addEventListener("click", clearSelection);
+sidebarToggleBtn.addEventListener("click", () => setSidebarOpen(true));
+sidebarCloseBtn.addEventListener("click", () => setSidebarOpen(false));
+sidebarBackdrop.addEventListener("click", () => setSidebarOpen(false));
+profileMenuTrigger.addEventListener("click", () => setProfileMenuOpen(profileMenu.hidden));
+document.addEventListener("click", event => {
+    if (!event.target.closest(".user-menu")) setProfileMenuOpen(false);
+});
 
 if (addSubtaskBtn) {
     addSubtaskBtn.addEventListener("click", () => {
@@ -873,14 +918,15 @@ if (addSubtaskBtn) {
     });
 }
 
-// Segmented control click handlers
-const segments = document.querySelectorAll(".segment");
-segments.forEach(segment => {
-    segment.addEventListener("click", (e) => {
-        segments.forEach(s => s.classList.remove("active"));
-        segment.classList.add("active");
-        
-        activeStatus = segment.dataset.status;
+statusFilters.forEach(button => {
+    button.addEventListener("click", () => {
+        activeStatus = button.dataset.status;
+        statusFilters.forEach(filter => {
+            const isActive = filter === button;
+            filter.classList.toggle("active", isActive);
+            filter.setAttribute("aria-pressed", String(isActive));
+        });
+        setSidebarOpen(false);
         loadTodos();
     });
 });
@@ -917,8 +963,8 @@ searchInput.addEventListener("input", () => {
 
 // HTML escaping helper
 function escapeHTML(str) {
-    if (!str) return "";
-    return str
+    if (str === null || str === undefined) return "";
+    return String(str)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -947,41 +993,39 @@ function highlightText(text, query) {
 
 // Master-Detail Panel Functions
 function selectTodo(id) {
-    selectedTodoId = id;
-    
-    // Highlight active todo
-    document.querySelectorAll(".todo-item").forEach(item => {
-        if (item.dataset.id === id) {
-            item.classList.add("active-todo");
-        } else {
-            item.classList.remove("active-todo");
-        }
-    });
-    
     const todo = currentTodos.find(t => t.id === id);
     if (!todo) return;
-    
-    const emptyState = document.querySelector(".detail-empty-state");
-    const detailContent = document.querySelector(".detail-content");
-    
-    if (emptyState) emptyState.style.display = "none";
-    if (detailContent) detailContent.style.display = "flex";
-    
-    // Populate details
-    document.getElementById("detail-title").innerText = todo.title;
+
+    selectedTodoId = id;
+    dashboardContent.classList.add("has-selection");
+    detailPanel.classList.toggle("mobile-open", window.innerWidth < 768);
+    detailPanel.setAttribute("aria-hidden", "false");
+    detailEmptyHint.hidden = true;
+    setSidebarOpen(false);
+
+    document.querySelectorAll(".todo-item").forEach(item => {
+        item.classList.toggle("active-todo", item.dataset.id === id);
+    });
+
+    const emptyState = detailPanel.querySelector(".detail-empty-state");
+    const detailContent = detailPanel.querySelector(".detail-content");
+    emptyState.hidden = true;
+    detailContent.hidden = false;
+    document.getElementById("detail-title").textContent = todo.title;
     
     const statusMap = { pending: "Tunda", in_progress: "Proses", done: "Selesai" };
     const statusBadge = document.getElementById("detail-status");
     if (statusBadge) {
-        statusBadge.innerText = statusMap[todo.status] || todo.status;
-        statusBadge.className = `tag-badge ${todo.status === 'done' ? 'checked' : ''}`;
+        statusBadge.textContent = statusMap[todo.status] || todo.status;
+        statusBadge.className = `tag-badge ${todo.status === "done" ? "checked" : ""}`;
     }
     
     const priorityLabel = document.getElementById("detail-priority");
     if (priorityLabel) {
         const priorityLabels = { low: "Rendah", medium: "Sedang", high: "Tinggi" };
-        priorityLabel.innerText = priorityLabels[todo.priority] || "Sedang";
-        priorityLabel.className = `priority-pill ${todo.priority}`;
+        const priority = Object.prototype.hasOwnProperty.call(priorityLabels, todo.priority) ? todo.priority : "medium";
+        priorityLabel.textContent = priorityLabels[priority];
+        priorityLabel.className = `priority-pill ${priority}`;
     }
     
     const dueDateSpan = document.getElementById("detail-duedate");
@@ -990,7 +1034,7 @@ function selectTodo(id) {
             const dateObj = new Date(todo.due_date);
             const remainingText = formatRemainingTime(todo.due_date, todo.status);
             const displayRemaining = remainingText ? ` (${remainingText})` : "";
-            dueDateSpan.innerText = dateObj.toLocaleDateString("id-ID", {
+            dueDateSpan.textContent = dateObj.toLocaleDateString("id-ID", {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
@@ -998,7 +1042,7 @@ function selectTodo(id) {
                 minute: "2-digit"
             }) + displayRemaining;
         } else {
-            dueDateSpan.innerText = "Tidak ada";
+            dueDateSpan.textContent = "Tidak ada";
         }
     }
     
@@ -1007,10 +1051,10 @@ function selectTodo(id) {
     const descText = document.getElementById("detail-desc");
     if (descCard && descText) {
         if (todo.description) {
-            descText.innerText = todo.description;
-            descCard.style.display = "block";
+            descText.textContent = todo.description;
+            descCard.hidden = false;
         } else {
-            descCard.style.display = "none";
+            descCard.hidden = true;
         }
     }
     
@@ -1019,10 +1063,10 @@ function selectTodo(id) {
     const tagsContainer = document.getElementById("detail-tags");
     if (tagsCard && tagsContainer) {
         if (todo.tags && todo.tags.length > 0) {
-            tagsContainer.innerHTML = todo.tags.map(tag => `<span class="tag-badge">${tag}</span>`).join("");
-            tagsCard.style.display = "block";
+            tagsContainer.innerHTML = todo.tags.map(tag => `<span class="tag-badge">${escapeHTML(String(tag))}</span>`).join("");
+            tagsCard.hidden = false;
         } else {
-            tagsCard.style.display = "none";
+            tagsCard.hidden = true;
         }
     }
     
@@ -1033,38 +1077,43 @@ function selectTodo(id) {
         if (todo.sub_tasks && todo.sub_tasks.length > 0) {
             detailSubtasksContainer.innerHTML = "";
             todo.sub_tasks.forEach((st) => {
-                const isChecked = st.status === 'done';
-                const stEl = document.createElement("div");
-                stEl.className = `detail-subtask-item ${isChecked ? 'done' : ''}`;
+                const isChecked = st.status === "done";
+                const stEl = document.createElement("button");
+                stEl.type = "button";
+                stEl.className = `detail-subtask-item ${isChecked ? "done" : ""}`;
+                stEl.setAttribute("aria-pressed", String(isChecked));
+                stEl.setAttribute("aria-label", `${isChecked ? "Tandai belum selesai" : "Tandai selesai"}: ${st.title}`);
                 stEl.innerHTML = `
-                    <div class="subtask-checkbox ${isChecked ? 'checked' : ''}"></div>
+                    <span class="subtask-checkbox ${isChecked ? "checked" : ""}" aria-hidden="true"></span>
                     <span class="subtask-title">${escapeHTML(st.title)}</span>
                 `;
-                
-                // Add click handler to toggle status
-                stEl.addEventListener("click", async (e) => {
-                    e.stopPropagation();
-                    await toggleSubTaskStatus(todo.id, st.id);
-                });
-                
+                stEl.addEventListener("click", () => toggleSubTaskStatus(todo.id, st.id));
                 detailSubtasksContainer.appendChild(stEl);
             });
-            detailSubtasksCard.style.display = "block";
+            detailSubtasksCard.hidden = false;
         } else {
-            detailSubtasksCard.style.display = "none";
+            detailSubtasksCard.hidden = true;
         }
     }
+    if (window.innerWidth < 768) detailBackBtn.focus({ preventScroll: true });
 }
 
 function clearSelection() {
+    const wasMobileDetailOpen = detailPanel.classList.contains("mobile-open");
+    const previousId = selectedTodoId;
     selectedTodoId = null;
     document.querySelectorAll(".todo-item").forEach(item => item.classList.remove("active-todo"));
-    
-    const emptyState = document.querySelector(".detail-empty-state");
-    const detailContent = document.querySelector(".detail-content");
-    
-    if (emptyState) emptyState.style.display = "flex";
-    if (detailContent) detailContent.style.display = "none";
+    dashboardContent.classList.remove("has-selection");
+    detailPanel.classList.remove("mobile-open");
+    detailPanel.setAttribute("aria-hidden", "true");
+    detailPanel.querySelector(".detail-empty-state").hidden = false;
+    detailPanel.querySelector(".detail-content").hidden = true;
+    detailEmptyHint.hidden = !(hasAnyTodos && window.innerWidth >= 768);
+    if (wasMobileDetailOpen) {
+        const previousCard = Array.from(document.querySelectorAll(".todo-item"))
+            .find(item => item.dataset.id === previousId);
+        if (previousCard) previousCard.focus({ preventScroll: true });
+    }
 }
 
 // Detail Panel Button Event Listeners
@@ -1084,22 +1133,20 @@ document.getElementById("detail-delete-btn").addEventListener("click", () => {
 function toggleSelectionMode() {
     isSelectionMode = !isSelectionMode;
     selectedTodos.clear();
-    
+
+    const selectModeLabel = document.getElementById("select-mode-label");
+    selectModeBtn.setAttribute("aria-pressed", String(isSelectionMode));
     if (isSelectionMode) {
-        selectModeBtn.innerText = "Batal";
-        selectModeBtn.classList.add("bold");
+        selectModeLabel.textContent = "Batal pilih";
         bulkActionBar.classList.add("active");
-        
-        // Hide detail panel if it was open (Desktop UX)
         clearSelection();
     } else {
-        selectModeBtn.innerText = "Pilih";
-        selectModeBtn.classList.remove("bold");
+        selectModeLabel.textContent = "Pilih beberapa";
         bulkActionBar.classList.remove("active");
     }
-    
+
     updateBulkBarUI();
-    renderTodoList(currentTodos); // Re-render to update click handlers and selection classes
+    renderTodoList(currentTodos);
 }
 
 // Toggle a single todo selection state
@@ -1110,26 +1157,28 @@ function toggleTodoSelection(id) {
         selectedTodos.add(id);
     }
     
-    // Visually toggle selection state
     const todoEl = document.querySelector(`.todo-item[data-id="${id}"]`);
     if (todoEl) {
-        todoEl.classList.toggle("selected-item");
+        const isSelected = selectedTodos.has(id);
+        todoEl.classList.toggle("selected-item", isSelected);
+        const checkbox = todoEl.querySelector(".checkbox-circle");
+        const todo = currentTodos.find(item => item.id === id);
+        checkbox.classList.toggle("selected", isSelected);
+        checkbox.setAttribute("aria-pressed", String(isSelected));
+        checkbox.setAttribute("aria-label", `${isSelected ? "Batalkan pilihan" : "Pilih"}: ${todo.title}`);
+        checkbox.title = checkbox.getAttribute("aria-label");
     }
-    
+
     updateBulkBarUI();
 }
 
 // Update the bulk bar count and state
 function updateBulkBarUI() {
     const count = selectedTodos.size;
-    bulkSelectCount.innerText = `${count} Terpilih`;
-    
-    // Enable/disable buttons based on selection size
+    bulkSelectCount.textContent = `${count} Terpilih`;
     const disabled = count === 0;
     bulkCompleteBtn.disabled = disabled;
     bulkDeleteBtn.disabled = disabled;
-    bulkCompleteBtn.style.opacity = disabled ? "0.5" : "1";
-    bulkDeleteBtn.style.opacity = disabled ? "0.5" : "1";
 }
 
 // Handler for checkbox click (intercepts individual action if in selection mode)
@@ -1189,6 +1238,24 @@ bulkCompleteBtn.addEventListener("click", triggerBulkComplete);
 bulkDeleteBtn.addEventListener("click", triggerBulkDelete);
 
 // ── THEME HANDLER ──
+function setProfileMenuOpen(isOpen) {
+    profileMenu.hidden = !isOpen;
+    profileMenuTrigger.setAttribute("aria-expanded", String(isOpen));
+}
+
+function setSidebarOpen(isOpen) {
+    const shouldOpen = isOpen && window.innerWidth < 768;
+    const wasOpen = dashboardContent.classList.contains("drawer-open");
+    dashboardContent.classList.toggle("drawer-open", shouldOpen);
+    sidebarToggleBtn.setAttribute("aria-expanded", String(shouldOpen));
+    sidebarBackdrop.tabIndex = -1;
+    if (shouldOpen) {
+        sidebarCloseBtn.focus({ preventScroll: true });
+    } else if (wasOpen && window.innerWidth < 768) {
+        sidebarToggleBtn.focus({ preventScroll: true });
+    }
+}
+
 function initTheme() {
     const savedTheme = localStorage.getItem("todo_theme");
     const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -1198,17 +1265,12 @@ function initTheme() {
 }
 
 function applyTheme(theme) {
-    if (theme === "dark") {
-        document.documentElement.classList.add("dark-theme");
-        document.body.classList.add("dark-theme");
-        if (sunIcon) sunIcon.style.display = "block";
-        if (moonIcon) moonIcon.style.display = "none";
-    } else {
-        document.documentElement.classList.remove("dark-theme");
-        document.body.classList.remove("dark-theme");
-        if (sunIcon) sunIcon.style.display = "none";
-        if (moonIcon) moonIcon.style.display = "block";
-    }
+    const isDark = theme === "dark";
+    document.documentElement.classList.toggle("dark-theme", isDark);
+    document.body.classList.toggle("dark-theme", isDark);
+    themeActionLabel.textContent = isDark ? "Ganti ke tema terang" : "Ganti ke tema gelap";
+    themeToggleBtn.title = isDark ? "Ganti ke tema terang" : "Ganti ke tema gelap";
+    themeToggleBtn.setAttribute("aria-label", themeToggleBtn.title);
 }
 
 function toggleTheme() {
@@ -1219,8 +1281,115 @@ function toggleTheme() {
 }
 
 if (themeToggleBtn) {
-    themeToggleBtn.addEventListener("click", toggleTheme);
+    themeToggleBtn.addEventListener("click", () => {
+        toggleTheme();
+        setProfileMenuOpen(false);
+    });
 }
+
+document.addEventListener("keydown", event => {
+    const target = event.target;
+    const isEditing = target instanceof HTMLElement
+        && (target.matches("input, textarea, select") || target.isContentEditable);
+
+    if (todoModal.classList.contains("active") && event.key === "Tab") {
+        const focusable = Array.from(todoModal.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter(element => !element.closest("[hidden]"));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+        return;
+    }
+
+    if (event.key === "Tab" && dashboardContent.classList.contains("drawer-open")) {
+        const focusable = Array.from(dashboardContent.querySelectorAll(
+            '.dashboard-sidebar button:not([disabled]), .dashboard-sidebar select:not([disabled])'
+        ));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+        return;
+    }
+
+    if (event.key === "Tab" && detailPanel.classList.contains("mobile-open")) {
+        const focusable = Array.from(detailPanel.querySelectorAll(
+            'button:not([disabled]), [tabindex="0"]'
+        )).filter(element => !element.closest("[hidden]"));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+        return;
+    }
+
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+        return;
+    }
+
+    if (event.key === "Escape") {
+        if (todoModal.classList.contains("active")) {
+            closeModal();
+        } else if (profileMenu && !profileMenu.hidden) {
+            setProfileMenuOpen(false);
+            profileMenuTrigger.focus();
+        } else if (dashboardContent.classList.contains("drawer-open")) {
+            setSidebarOpen(false);
+        } else if (detailPanel.classList.contains("mobile-open")) {
+            clearSelection();
+        }
+        return;
+    }
+
+    if (!isEditing && !event.ctrlKey && !event.metaKey && !event.altKey && event.key.toLowerCase() === "n") {
+        if (dashboardScreen.classList.contains("active") && !todoModal.classList.contains("active")) {
+            event.preventDefault();
+            openCreateModal();
+        }
+    }
+
+    if (profileMenu && !profileMenu.hidden && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+        const items = Array.from(profileMenu.querySelectorAll('[role="menuitem"]'));
+        const index = items.indexOf(document.activeElement);
+        const nextIndex = event.key === "ArrowDown"
+            ? (index + 1) % items.length
+            : (index - 1 + items.length) % items.length;
+        event.preventDefault();
+        items[nextIndex < 0 ? 0 : nextIndex].focus();
+    }
+});
+
+window.addEventListener("resize", () => {
+    if (selectedTodoId) {
+        detailPanel.classList.toggle("mobile-open", window.innerWidth < 768);
+    }
+    if (window.innerWidth >= 768) {
+        dashboardContent.classList.remove("drawer-open");
+        sidebarToggleBtn.setAttribute("aria-expanded", "false");
+    } else {
+        detailEmptyHint.hidden = true;
+    }
+});
 
 // ── SCROLL OBSERVER ──
 function initScrollObserver() {

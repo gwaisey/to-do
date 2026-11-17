@@ -73,6 +73,7 @@ func (db *DB) migrate() {
 			due_date    DATETIME,
 			tags        TEXT DEFAULT '[]',
 			sub_tasks   TEXT DEFAULT '[]',
+			sort_order  INTEGER NOT NULL DEFAULT 0,
 			created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (user_id) REFERENCES users(id)
@@ -80,7 +81,6 @@ func (db *DB) migrate() {
 		// Index untuk performa query (A.56)
 		`CREATE INDEX IF NOT EXISTS idx_todos_user_id ON todos(user_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status)`,
-		`CREATE INDEX IF NOT EXISTS idx_todos_sort_order ON todos(sort_order)`,
 	}
 
 	// A.14 — Perulangan: for range
@@ -126,8 +126,11 @@ func (db *DB) migrate() {
 			log.Printf("⚠️ Gagal menambahkan kolom sort_order ke tabel todos: %v", err)
 		} else {
 			fmt.Println("🚀 Berhasil menambahkan kolom sort_order ke tabel todos")
-			db.Conn.Exec("CREATE INDEX IF NOT EXISTS idx_todos_sort_order ON todos(sort_order)")
 		}
+	}
+
+	if _, err := db.Conn.Exec("CREATE INDEX IF NOT EXISTS idx_todos_sort_order ON todos(sort_order)"); err != nil {
+		log.Fatalf("❌ Gagal membuat index sort_order: %v", err)
 	}
 
 	fmt.Println("✅ Migrasi database selesai")

@@ -3,236 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>Reminders - To Do List</title>
-    <!-- Inter Font for iOS-like Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Vanilla CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <div id="app">
-        <!-- Toast Notification -->
-        <div id="toast" class="toast"></div>
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-        <!-- AUTHENTICATION SCREEN -->
-        <div id="auth-screen" class="screen active">
+        <section id="auth-screen" class="screen active" aria-label="Autentikasi">
             <div class="auth-card">
-                <div class="auth-header">
-                    <div class="app-icon">✓</div>
+                <header class="auth-header">
+                    <div class="app-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"></path></svg>
+                    </div>
                     <h1>Reminders</h1>
                     <p id="auth-subtitle">Masuk untuk melihat daftar tugas Anda</p>
-                </div>
+                </header>
 
-                <!-- Login Form -->
                 <form id="login-form" class="auth-form active">
                     <div class="input-group">
                         <label for="login-email">Email</label>
-                        <input type="email" id="login-email" required placeholder="name@example.com">
+                        <input type="email" id="login-email" autocomplete="email" required placeholder="name@example.com">
                     </div>
                     <div class="input-group">
                         <label for="login-password">Password</label>
-                        <input type="password" id="login-password" required placeholder="••••••••">
+                        <input type="password" id="login-password" autocomplete="current-password" required placeholder="Minimal 8 karakter">
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Masuk</button>
                     <p class="auth-toggle">Belum punya akun? <a href="#" id="to-register">Daftar sekarang</a></p>
                 </form>
 
-                <!-- Register Form -->
                 <form id="register-form" class="auth-form">
                     <div class="input-group">
                         <label for="reg-username">Username</label>
-                        <input type="text" id="reg-username" required placeholder="username_anda">
+                        <input type="text" id="reg-username" autocomplete="username" required placeholder="username_anda">
                     </div>
                     <div class="input-group">
                         <label for="reg-email">Email</label>
-                        <input type="email" id="reg-email" required placeholder="name@example.com">
+                        <input type="email" id="reg-email" autocomplete="email" required placeholder="name@example.com">
                     </div>
                     <div class="input-group">
                         <label for="reg-password">Password</label>
-                        <input type="password" id="reg-password" required minlength="8" placeholder="Minimal 8 karakter">
+                        <input type="password" id="reg-password" autocomplete="new-password" required minlength="8" placeholder="Minimal 8 karakter">
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Daftar</button>
                     <p class="auth-toggle">Sudah punya akun? <a href="#" id="to-login">Masuk</a></p>
                 </form>
             </div>
-        </div>
+        </section>
 
-        <!-- MAIN DASHBOARD SCREEN -->
-        <div id="dashboard-screen" class="screen">
+        <section id="dashboard-screen" class="screen" aria-label="Daftar tugas">
             <header class="ios-header">
                 <div class="header-top">
-                    <div class="user-profile">
-                        <div class="avatar" id="user-avatar">U</div>
-                        <div class="user-info">
-                            <span class="greeting">Halo,</span>
-                            <span class="username" id="display-username">User</span>
+                    <button id="sidebar-toggle-btn" class="icon-button sidebar-toggle" type="button" aria-label="Buka menu filter" title="Buka menu filter" aria-controls="dashboard-sidebar" aria-expanded="false">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+
+                    <div class="user-menu">
+                        <button id="profile-menu-trigger" class="profile-trigger" type="button" aria-label="Buka menu pengguna" title="Menu pengguna" aria-haspopup="true" aria-expanded="false" aria-controls="profile-menu">
+                            <span class="avatar" id="user-avatar">U</span>
+                            <span class="user-info">
+                                <span class="greeting">Halo,</span>
+                                <span class="username" id="display-username">User</span>
+                            </span>
+                            <svg class="profile-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>
+                        </button>
+                        <div id="profile-menu" class="profile-menu" role="menu" hidden>
+                            <button id="theme-toggle-btn" class="menu-action" type="button" role="menuitem" title="Ubah tema" aria-label="Ubah tema">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5a8.5 8.5 0 1 0 12 12Z"></path></svg>
+                                <span id="theme-action-label">Ganti tema</span>
+                            </button>
+                            <button id="logout-btn" class="menu-action danger" type="button" role="menuitem" title="Keluar dari akun" aria-label="Keluar dari akun">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"></path></svg>
+                                <span>Keluar</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="header-actions" style="display: flex; gap: 8px; align-items: center;">
-                        <button id="theme-toggle-btn" class="btn-theme-toggle" title="Ubah Tema">
-                            <!-- Sun Icon (Tampil saat Dark Mode aktif untuk pindah ke Light) -->
-                            <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                            <!-- Moon Icon (Tampil saat Light Mode aktif untuk pindah ke Dark) -->
-                            <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                        </button>
-                        <button id="logout-btn" class="btn-logout" title="Keluar">
-                            <!-- iOS Logout Icon -->
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                        </button>
-                    </div>
-                </div>
 
-                <div class="search-container">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="search-input" class="search-input" placeholder="Cari pengingat...">
+                    <div class="search-container">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+                        <input type="search" id="search-input" class="search-input" placeholder="Cari pengingat..." aria-label="Cari pengingat">
+                        <kbd class="search-shortcut" aria-hidden="true">Ctrl+K</kbd>
+                    </div>
                 </div>
             </header>
 
-            <main class="ios-content">
-                <aside class="dashboard-sidebar">
-                    <!-- Statistics Widgets -->
-                    <section class="stats-grid">
-                        <div class="stat-card blue" data-filter="all">
-                            <div class="stat-icon">📅</div>
-                            <div class="stat-value" id="stat-total">0</div>
-                            <div class="stat-label">Semua</div>
-                        </div>
-                        <div class="stat-card orange" data-filter="pending">
-                            <div class="stat-icon">⏳</div>
-                            <div class="stat-value" id="stat-pending">0</div>
-                            <div class="stat-label">Sedang Jalan</div>
-                        </div>
-                        <div class="stat-card green" data-filter="completed">
-                            <div class="stat-icon">✓</div>
-                            <div class="stat-value" id="stat-completed">0</div>
-                            <div class="stat-label">Selesai</div>
-                        </div>
-                    </section>
-
-                    <!-- Filter Segmented Control -->
-                    <div class="segmented-control">
-                        <button class="segment active" data-status="">Semua</button>
-                        <button class="segment" data-status="pending">Tunda</button>
-                        <button class="segment" data-status="in_progress">Proses</button>
-                        <button class="segment" data-status="done">Selesai</button>
+            <main id="dashboard-content" class="ios-content">
+                <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="Tutup menu filter" tabindex="-1"></button>
+                <aside id="dashboard-sidebar" class="dashboard-sidebar" aria-label="Filter tugas">
+                    <div class="sidebar-heading">
+                        <h2>Ringkasan</h2>
+                        <button id="sidebar-close-btn" class="icon-button sidebar-close" type="button" aria-label="Tutup menu filter" title="Tutup menu filter">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                        </button>
+                    </div>
+                    <div class="stats-grid" role="group" aria-label="Filter berdasarkan status">
+                        <button class="stat-card status-filter active" type="button" data-status="" aria-pressed="true">
+                            <span class="stat-card-top">
+                                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4m8-4v4M4 9h16"></path></svg>
+                                <span class="stat-value" id="stat-total">0</span>
+                            </span>
+                            <span class="stat-label">Semua</span>
+                        </button>
+                        <button class="stat-card status-filter" type="button" data-status="pending" aria-pressed="false">
+                            <span class="stat-card-top">
+                                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                                <span class="stat-value" id="stat-pending">0</span>
+                            </span>
+                            <span class="stat-label">Tunda</span>
+                        </button>
+                        <button class="stat-card status-filter" type="button" data-status="in_progress" aria-pressed="false">
+                            <span class="stat-card-top">
+                                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+                                <span class="stat-value" id="stat-in-progress">0</span>
+                            </span>
+                            <span class="stat-label">Proses</span>
+                        </button>
+                        <button class="stat-card status-filter" type="button" data-status="done" aria-pressed="false">
+                            <span class="stat-card-top">
+                                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
+                                <span class="stat-value" id="stat-completed">0</span>
+                            </span>
+                            <span class="stat-label">Selesai</span>
+                        </button>
                     </div>
                 </aside>
 
-                <!-- Todo List Area -->
-                <section class="todo-section">
+                <section class="todo-section" aria-labelledby="todo-heading">
                     <div class="section-title-row">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <h2>Daftar Tugas</h2>
-                            <button id="select-mode-btn" class="btn-text" style="font-size: 14px; padding: 2px 8px; font-weight: 500;">Pilih</button>
-                        </div>
-                        <div class="priority-filter-container" style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 12px;">
-                            <select id="sort-filter" class="ios-select-filter">
-                                <option value="created_at_desc">Terbaru</option>
-                                <option value="due_date_asc">Tenggat Terdekat</option>
-                                <option value="priority_desc">Prioritas Tertinggi</option>
-                                <option value="title_asc">Judul (A-Z)</option>
-                            </select>
-                            <select id="tag-filter" class="ios-select-filter">
-                                <option value="">Semua Tag</option>
-                            </select>
-                            <select id="priority-filter" class="ios-select-filter">
-                                <option value="">Semua Prioritas</option>
-                                <option value="high">Tinggi</option>
-                                <option value="medium">Sedang</option>
-                                <option value="low">Rendah</option>
-                            </select>
+                        <h1 id="todo-heading">Daftar Tugas</h1>
+                        <button id="select-mode-btn" class="btn btn-secondary select-mode-btn" type="button" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="m8 12 2.5 2.5L16 9"></path></svg>
+                            <span id="select-mode-label">Pilih beberapa</span>
+                        </button>
+                    </div>
+
+                    <div class="toolbar" aria-label="Opsi daftar tugas">
+                        <label class="sr-only" for="sort-filter">Urutkan tugas</label>
+                        <select id="sort-filter" class="filter-select">
+                            <option value="created_at_desc">Terbaru</option>
+                            <option value="due_date_asc">Tenggat terdekat</option>
+                            <option value="priority_desc">Prioritas tertinggi</option>
+                            <option value="title_asc">Judul (A-Z)</option>
+                        </select>
+                        <label class="sr-only" for="tag-filter">Filter berdasarkan tag</label>
+                        <select id="tag-filter" class="filter-select">
+                            <option value="">Semua Tag</option>
+                        </select>
+                        <label class="sr-only" for="priority-filter">Filter berdasarkan prioritas</label>
+                        <select id="priority-filter" class="filter-select">
+                            <option value="">Semua Prioritas</option>
+                            <option value="high">Tinggi</option>
+                            <option value="medium">Sedang</option>
+                            <option value="low">Rendah</option>
+                        </select>
+                    </div>
+
+                    <div id="detail-empty-hint" class="detail-empty-hint" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"></path><path d="M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+                        <span>Pilih tugas untuk melihat detail</span>
+                    </div>
+
+                    <div id="todo-list" class="todo-list" aria-live="polite" aria-busy="false">
+                        <div class="empty-state">
+                            <span class="empty-state-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="17" rx="2"></rect><path d="M8 9h8M8 13h5"></path><path d="M9 2v4m6-4v4"></path></svg>
+                            </span>
+                            <h2>Belum ada tugas</h2>
+                            <p>Tambahkan tugas pertama agar semua pengingatmu tersusun rapi.</p>
+                            <button id="empty-create-btn" class="btn btn-primary" type="button">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                                Buat tugas pertama
+                            </button>
                         </div>
                     </div>
 
-                    <div id="todo-list" class="todo-list">
-                        <!-- Todos will be rendered here dynamically -->
-                        <div class="empty-state">
-                            <p>Tidak ada tugas untuk saat ini.</p>
-                        </div>
-                    </div>
-                    
-                    <div id="scroll-sentinel" class="scroll-sentinel">
-                        <div id="loading-spinner" class="spinner" style="display: none;"></div>
+                    <div id="scroll-sentinel" class="scroll-sentinel" aria-hidden="true">
+                        <div id="loading-spinner" class="spinner" hidden></div>
                     </div>
                 </section>
 
-                <!-- Todo Detail Panel Area -->
-                <aside id="todo-detail-panel" class="todo-detail-panel">
+                <aside id="todo-detail-panel" class="todo-detail-panel" aria-label="Detail tugas" aria-hidden="true">
+                    <div class="detail-mobile-header">
+                        <button id="detail-back-btn" class="icon-button" type="button" aria-label="Kembali ke daftar tugas" title="Kembali ke daftar tugas">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12"></path></svg>
+                        </button>
+                        <h2>Detail Tugas</h2>
+                    </div>
                     <div class="detail-empty-state">
-                        <span class="detail-empty-icon">📝</span>
+                        <span class="detail-empty-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"></path><path d="M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+                        </span>
                         <p>Pilih tugas untuk melihat detail</p>
                     </div>
-                    <div class="detail-content" style="display: none;">
+                    <div class="detail-content" hidden>
                         <h2 id="detail-title">Judul Tugas</h2>
-                        
                         <div class="detail-card">
                             <div class="detail-row">
                                 <span class="row-label">Status</span>
-                                <span id="detail-status" class="tag-badge">Pending</span>
+                                <span id="detail-status" class="tag-badge">Tunda</span>
                             </div>
                             <div class="detail-row">
                                 <span class="row-label">Prioritas</span>
-                                <span id="detail-priority" class="priority-pill">Medium</span>
+                                <span id="detail-priority" class="priority-pill medium">Sedang</span>
                             </div>
                             <div class="detail-row">
-                                <span class="row-label">Tenggat Waktu</span>
-                                <span id="detail-duedate" class="detail-value">10 Jun 2026</span>
+                                <span class="row-label">Tenggat waktu</span>
+                                <span id="detail-duedate" class="detail-value">Tidak ada</span>
                             </div>
                         </div>
-
                         <div id="detail-desc-card" class="detail-card">
-                            <h4 class="detail-section-title">Catatan</h4>
-                            <p id="detail-desc" class="detail-desc-text">Deskripsi tugas...</p>
+                            <h3 class="detail-section-title">Catatan</h3>
+                            <p id="detail-desc" class="detail-desc-text"></p>
                         </div>
-
                         <div id="detail-tags-card" class="detail-card">
-                            <h4 class="detail-section-title">Tag</h4>
+                            <h3 class="detail-section-title">Tag</h3>
                             <div id="detail-tags" class="detail-tags-list"></div>
                         </div>
-
-                        <div id="detail-subtasks-card" class="detail-card" style="display: none;">
-                            <h4 class="detail-section-title">Sub-tugas</h4>
-                            <div id="detail-subtasks-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;"></div>
+                        <div id="detail-subtasks-card" class="detail-card" hidden>
+                            <h3 class="detail-section-title">Sub-tugas</h3>
+                            <div id="detail-subtasks-container" class="detail-subtasks-container"></div>
                         </div>
-
                         <div class="detail-actions-row">
-                            <button id="detail-edit-btn" class="btn btn-secondary btn-block">Edit Tugas</button>
-                            <button id="detail-delete-btn" class="btn btn-danger-text btn-block">Hapus Tugas</button>
+                            <button id="detail-edit-btn" class="btn btn-secondary btn-block" type="button">Edit Tugas</button>
+                            <button id="detail-delete-btn" class="btn btn-danger btn-block" type="button">Hapus Tugas</button>
                         </div>
                     </div>
                 </aside>
             </main>
 
-            <!-- Floating Action Button for iOS -->
-            <button id="add-todo-fab" class="fab">＋</button>
-        </div>
+            <button id="add-todo-fab" class="fab" type="button" title="Tambah tugas (N)" aria-label="Tambah tugas. Pintasan keyboard N">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                <span class="fab-tooltip" role="tooltip">Tambah tugas <kbd>N</kbd></span>
+            </button>
 
-        <!-- IOS BOTTOM SHEET MODAL (CREATE / EDIT) -->
-        <div id="todo-modal" class="modal-backdrop">
-            <div class="modal-sheet">
-                <div class="sheet-header">
-                    <button id="cancel-todo-btn" class="btn-text">Batal</button>
-                    <h3 id="modal-title">Tugas Baru</h3>
-                    <button id="save-todo-btn" class="btn-text bold">Simpan</button>
+            <div id="bulk-action-bar" class="bulk-bar" aria-live="polite">
+                <span id="bulk-select-count">0 Terpilih</span>
+                <div class="bulk-actions-group">
+                    <button id="bulk-complete-btn" class="btn-bulk" type="button" disabled>Tandai Selesai</button>
+                    <button id="bulk-delete-btn" class="btn-bulk danger" type="button" disabled>Hapus</button>
                 </div>
+            </div>
+        </section>
+
+        <div id="todo-modal" class="modal-backdrop" aria-hidden="true">
+            <section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                <header class="sheet-header">
+                    <button id="cancel-todo-btn" class="btn-text" type="button">Batal</button>
+                    <h2 id="modal-title">Tugas Baru</h2>
+                    <button id="save-todo-btn" class="btn-text bold" type="button">Simpan</button>
+                </header>
 
                 <form id="todo-form" class="sheet-form">
                     <input type="hidden" id="edit-todo-id">
-                    
                     <div class="sheet-input-group">
+                        <label class="sr-only" for="todo-title">Judul pengingat</label>
                         <input type="text" id="todo-title" placeholder="Judul Pengingat" required>
                     </div>
-
                     <div class="sheet-input-group">
+                        <label class="sr-only" for="todo-desc">Catatan atau deskripsi</label>
                         <textarea id="todo-desc" placeholder="Catatan / Deskripsi" rows="3"></textarea>
                     </div>
-
                     <div class="sheet-section-card">
                         <div class="sheet-row">
                             <span class="row-label">Prioritas</span>
-                            <div class="segmented-control-small">
+                            <div class="segmented-control-small" role="radiogroup" aria-label="Prioritas tugas">
                                 <label class="segment-pill">
                                     <input type="radio" name="todo-priority" value="low" checked>
                                     <span>Rendah</span>
@@ -247,42 +286,28 @@
                                 </label>
                             </div>
                         </div>
-
                         <div class="sheet-row">
-                            <span class="row-label">Tenggat Waktu</span>
+                            <label class="row-label" for="todo-duedate">Tenggat waktu</label>
                             <input type="datetime-local" id="todo-duedate" class="ios-date-input">
                         </div>
                     </div>
-
                     <div class="sheet-section-card">
                         <div class="sheet-row-column">
                             <label for="todo-tags" class="row-label">Tag (pisahkan dengan koma)</label>
                             <input type="text" id="todo-tags" placeholder="misal: kerja, penting, pribadi">
                         </div>
                     </div>
-
-                    <div class="sheet-section-card" id="modal-subtasks-section">
+                    <div class="sheet-section-card">
                         <div class="sheet-row-column">
-                            <label class="row-label" style="font-weight: 600; margin-bottom: 8px;">Sub-tugas</label>
-                            <div id="modal-subtasks-container" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                                <!-- Subtasks list dynamically populated -->
-                            </div>
-                            <button type="button" id="add-subtask-btn" class="btn-text" style="align-self: flex-start; font-size: 14px; margin-top: 8px; font-weight: 600; padding: 2px 0;">+ Tambah Sub-tugas</button>
+                            <h3 class="row-label">Sub-tugas</h3>
+                            <div id="modal-subtasks-container" class="modal-subtasks-container"></div>
+                            <button type="button" id="add-subtask-btn" class="btn-text add-subtask-btn">+ Tambah Sub-tugas</button>
                         </div>
                     </div>
                 </form>
-            </div>
-        <!-- BULK ACTION BAR (iOS style) -->
-        <div id="bulk-action-bar" class="bulk-bar">
-            <span id="bulk-select-count">0 Terpilih</span>
-            <div class="bulk-actions-group" style="display: flex; gap: 16px;">
-                <button id="bulk-complete-btn" class="btn-bulk blue">Tandai Selesai</button>
-                <button id="bulk-delete-btn" class="btn-bulk red">Hapus</button>
-            </div>
+            </section>
         </div>
     </div>
-
-    <!-- Vanilla Javascript Logic -->
     <script src="/app.js"></script>
 </body>
 </html>

@@ -1,95 +1,112 @@
-# to-do (Golang)
+# To-Do API
 
-A clean, production-ready RESTful Todo API built with Go, utilizing standard `net/http` library, SQLite for persistence, and JWT for secure authentication.
-
----
+A Go-based REST API for managing personal to-do items with SQLite persistence and JWT authentication.
 
 ## Features
 
-- **Authentication & Authorization**: Secure signup (`/register`), login (`/login`) with JWT.
-- **RESTful Todo Management**: Full CRUD operations for todos:
-  - Filtering by status, priority, or search query.
-  - Partial updates.
-  - Dedicated endpoint to quickly mark a todo as completed.
-- **Robust Design Patterns**:
-  - **Thread-safe Request Counter**: Utilizing Go mutexes.
-  - **Graceful Shutdown**: Handles OS interruption signals (`SIGINT`/`SIGTERM`) and waits for outstanding requests.
-  - **Pipeline Concurrency**: Pipeline-based search and filter helper functions.
-  - **Timeout Pattern**: Search endpoints protected by timeouts using Go channels.
-- **Rate Limiting**: Built-in Token Bucket rate limiter middleware to throttle requests per client IP and prevent spam/brute-force (returns HTTP `429`).
-- **Structured Logging**: Using Go's native `log/slog` for JSON-formatted logs to stdout, ideal for log parsing and aggregators.
-- **SQLite Concurrency Optimization**: Configured WAL (Write-Ahead Logging) mode, busy timeout, and connection pooling limits to prevent "database is locked" errors under concurrent traffic.
-- **Database Migrations**: Automatic SQLite database creation and schema migration on startup.
-- **Strict Environment Validation**: Fails fast on startup in production environments (`APP_ENV=production`) if `JWT_SECRET` is unset or remains on default development secrets.
+- User registration and login with JWT-based auth
+- CRUD operations for todos
+- Todo filtering and search endpoints
+- Todo completion and deletion helpers
+- Bulk complete and bulk delete actions
+- Reorder support for drag-and-drop sorting
+- SQLite database with WAL mode
+- Request timeout, rate limiting, CORS, logging, and graceful shutdown
+- Static frontend served from the `public/` folder
 
----
+## Project structure
 
-## API Documentation
+- `main.go` — server setup and route registration
+- `config/` — environment configuration loader
+- `database/` — SQLite connection and migrations
+- `handlers/` — HTTP handlers for auth and todo endpoints
+- `middleware/` — JWT auth, CORS, timeout, logging, rate limiting, recovery
+- `models/` — request/response models
+- `public/` — frontend assets served by the API
+- `tests/` — Go tests
 
-All endpoints (except `/health`, `/register`, and `/login`) require a Bearer token in the `Authorization` header: `Authorization: Bearer <token>`.
+## API endpoints
 
-| Endpoint | Method | Auth Required | Description |
-| :--- | :--- | :---: | :--- |
-| `/health` | `GET` | No | Simple health status & server time checks. |
-| `/register` | `POST` | No | Creates a new user profile. |
-| `/login` | `POST` | No | Authenticates a user and returns a JWT. |
-| `/todos` | `GET` | Yes | Get all todos for user (supports `status`, `priority`, `search` query params). |
-| `/todos` | `POST` | Yes | Create a new todo. |
-| `/todos/{id}` | `GET` | Yes | Retrieve details of a single todo. |
-| `/todos/{id}` | `PUT` | Yes | Update an existing todo. |
-| `/todos/{id}/complete` | `PATCH` | Yes | Mark a todo as done. |
-| `/todos/search` | `GET` | Yes | Search todos with query param `q` (with 5-second timeout logic). |
-| `/todos/{id}` | `DELETE` | Yes | Delete a todo. |
+All protected endpoints require a Bearer token in the `Authorization` header:
 
-A Postman collection is also provided in the repository: [to-do.postman_collection.json](to-do.postman_collection.json).
+```http
+Authorization: Bearer <token>
+```
 
----
+| Endpoint | Method | Auth | Description |
+|:---|:---|:---:|:---|
+| `/health` | GET | No | Health check |
+| `/register` | POST | No | Register a new user |
+| `/login` | POST | No | Login and receive a JWT |
+| `/todos` | GET | Yes | List todos |
+| `/todos` | POST | Yes | Create a new todo |
+| `/todos/search` | GET | Yes | Search todos with timeout protection |
+| `/todos/{id}` | GET | Yes | Get one todo |
+| `/todos/{id}` | PUT | Yes | Update a todo |
+| `/todos/{id}` | DELETE | Yes | Delete a todo |
+| `/todos/{id}/complete` | PATCH | Yes | Mark a todo as completed |
+| `/todos/reorder` | POST | Yes | Reorder todos using the client order |
+| `/todos/bulk-complete` | POST | Yes | Mark multiple todos as complete |
+| `/todos/bulk-delete` | POST | Yes | Delete multiple todos |
 
-## Local Development Setup
+## Environment variables
+
+The app loads values from `.env` if present. Supported variables:
+
+```env
+APP_ENV=development
+APP_PORT=8080
+DB_PATH=./todo.db
+JWT_SECRET=change_this_secret
+JWT_EXPIRY_HOURS=24
+```
+
+Notes:
+- The app reads `APP_PORT`, not `PORT`.
+- In production, `JWT_SECRET` should be set to a strong secret and must not be left as the default value.
+
+## Local development
 
 ### Prerequisites
 
-This application uses a pure-Go SQLite driver (`modernc.org/sqlite`). This means **no CGO, GCC, or Docker is required** to run or build the project locally on your host system.
+- Go 1.26+
+- SQLite support via the modernc driver included in the project
+- Optional: Docker
 
-You only need:
-1. **Go 1.26+**
-
----
-
-## Running the Application
-
-### Option A: Running Locally (Recommended)
-
-Since the project is CGO-free, you can run the application directly on your machine:
+### Run directly
 
 ```bash
-# Run the application
+go mod tidy
 go run main.go
 ```
 
-To run on a custom port, you can pass the `-port` flag:
+Override the port with:
+
 ```bash
 go run main.go -port 9090
 ```
 
-### Option B: Using Docker
-
-You can also run the application inside a Docker container:
+### Run with Docker
 
 ```bash
-# 1. Build the docker image
 docker build -t to-do .
-
-# 2. Run the container mapping port 8080
 docker run -p 8080:8080 --env-file .env to-do
 ```
 
----
+## Testing
 
-## Running Tests
-
-Unit tests are written using Go's built-in `testing` framework. You can run them locally with:
+Run the test suite:
 
 ```bash
-go test -v ./...
+go test ./...
 ```
+
+## Notes
+
+- The server serves the frontend from `public/` at the root route.
+- The app uses SQLite file storage (`./todo.db` by default).
+- The backend includes request logging, timeout middleware, rate limiting, recovery middleware, and CORS support.
+
+## Postman
+
+A sample collection is included at `to-do.postman_collection.json`.
